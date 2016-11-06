@@ -1,0 +1,9 @@
+---
+machine:
+  timezone: Asia/Tokyo
+  services:
+    - docker
+test:
+  post:
+    - "docker run -v ${PWD}:/mnt -w /mnt makisyu/texlive-2016 latexmk"
+    - cp build/*.pdf $CIRCLE_ARTIFACTS
