@@ -1,7 +1,0 @@
-0. ログシステム全体像について
-1. Fluentdについて
-2. Kafkaについて
-3. InfluxDBについて
-4. 取得をおすすめするログの種類について
-5. VMsのメトリクス取得に使っているコードについて(https://github.com/Project-VI/openstack-vm-stats-collector)
-6. 
