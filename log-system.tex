@@ -1,0 +1,90 @@
+\documentclass[9pt,b5paper,tombo,openany]{jsbook}
+
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{listings}
+\usepackage{inconsolata}
+\usepackage{url}
+\usepackage{titlesec}
+\usepackage[dvipdfmx]{color}
+\usepackage{setspace}
+\usepackage{wrapfig}
+
+\lstset{basicstyle={\small\ttfamily}}
+\lstset{frame=single}
+\lstset{breaklines=true}
+\lstset{lineskip=-1.5pt}
+\lstset{framesep=6pt}
+
+\renewcommand{\kanjifamilydefault}{\gtdefault}
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\contentsname}{}
+\renewcommand{\baselinestretch}{1.1}
+
+\definecolor{gray75}{gray}{0.75}
+\titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\textcolor{gray75}{｜}}{0pt}{\Huge\bfseries}
+
+\begin{document}
+
+\noindent
+{\Huge OpenStackの本 番外編}
+
+\vspace*{-1in}
+\begin{minipage}{0.4\paperwidth}
+	\tableofcontents
+\end{minipage}
+
+\vspace*{1in}
+\begin{minipage}{0.4\paperwidth}
+	\begin{spacing}{0.75}
+	\end{spacing}
+\end{minipage}
+
+\thispagestyle{empty}
+
+\chapter{OpenStackアップグレード超入門}
+
+\setcounter{page}{1}
+
+\marginpar{\includegraphics[width=30mm]{mini1.png}}本章は、 Qiita に投稿した OpenStack Advent Calendar 2015 の 12 月 3 日の記事である「 OpenStack をアップグレードしたら心臓止まりかけた話」という物語を改めて書き記した章である(ただし、改訂版というわけではない)。
+
+\section{ログについて考えてみる}
+\section{Fluentdについて}
+\section{Kafkaについて}
+\section{InfluxDBについて}
+\section{OpenStack運用のためにチェックしたほうが良いログについて}
+\section{KVMからVMのメトリクスを取得する方法}
+
+
+
+
+\chapter{あとがき}
+
+\setstretch{0.96}
+
+\section*{こじろー}
+
+\marginpar{\includegraphics[width=30mm]{mini3.png}}
+
+\section*{まっきーさん}
+
+\marginpar{\includegraphics[width=30mm]{mini3.png}}
+
+\noindent
+代わって檻には一匹の精悍な豹が入れられた。
+
+\noindent
+（西岡兄姉（2010）『カフカ・断食芸人』ヴィレッジブックス）
+
+\vspace*{\stretch{1}}
+\setstretch{1.0}
+\begin{minipage}{0.5\paperwidth}
+	著者：こじろー・まっきー
+
+	挿絵：かとう
+
+	発行：2016年12月31日
+
+	印刷：POPLS (\url{http://www.inv.co.jp/~popls/})
+\end{minipage}
+
+\end{document}
