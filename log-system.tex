@@ -41,17 +41,80 @@
 
 \thispagestyle{empty}
 
-\chapter{OpenStackアップグレード超入門}
+\chapter{OpenStackのログに関する個人的な見解}
 
 \setcounter{page}{1}
 
-\marginpar{\includegraphics[width=30mm]{mini1.png}}本章は、 Qiita に投稿した OpenStack Advent Calendar 2015 の 12 月 3 日の記事である「 OpenStack をアップグレードしたら心臓止まりかけた話」という物語を改めて書き記した章である(ただし、改訂版というわけではない)。
+\marginpar{\includegraphics[width=30mm]{mini1.png}}兎にも角にもログである。これは運用するにあたって一番(ではないかもしれんが)考慮する必要がある。これをまぁいいかって感じで運用をスタートさせてしまうと、あとで地獄を見るであろう(そのほうが後学のためでもあるという意見もある)。今回は、ボク個人が至極個人的な趣味趣向とミーハー精神に基づき構築し運用もしているログのシステムについて記す。たぶん、これからOpenStackを導入する人にとっては、参考になる部分はあまり無いであろう。街談巷説、道聴塗説、話半分、そんな本章である。
 
 \section{ログについて考えてみる}
+前回出版した本 OpenStackの本 上級編ではこのように言及していた。
+
+\begin{quotation}
+  Q. 入れたはいいけど監視したいです
+  A. 何を監視するか決めましょう
+  まずは仮想マシンの監視ですが、これは普通のOS監視と同じ考え方で大丈夫です。ZabbixでもInfluxDBでも好きな物を使えますので、運用スタイルにあったものを選択しましょう。仮想環境ではマシンが頻繁に作成されては消えていく性質があるため、それに対応できるような監視ソリューションがいいと思います。
+
+  コンピュートホストやネットワークノードなど、OpenStackで使われる物理サーバーの監視は普通のログやシステムメトリクスの監視に加えて、OpenStack専用の監視項目を追加する必要があるかもしれません。メモリは実使用メモリと仮想マシン割り当て量が大きく違ってきますので注意が必要です。また、ディスクもThinプロビジョニングですと、あるとき急にディスクがあふれる、なんていうこともあり得ます。libvirtのAPIなどを使用して（\verb|virsh|コマンドなど）仮想マシンホスト専用のメトリクスを取得することを考えるとよいと思います。
+\end{quotation}
+
+そう、何を監視するか、というのはとても重要である。死活監視は今回置いておくとして、監視対象のログは大きく2つに分けられる。1つ目は、イベントログ、2つ目は、パフォーマンスログである。イベントログというと、OpenStackの各コンポーネントから出力されたログである。主に、/var/log/XXX/配下にあるものを指す。パフォーマンスログとは、OpenStackの各コンポーネントを稼働させている各サーバ、及びKVMホストの性能データを指す。
+
+これらを取得し、ストアし、分析し、障害対応のために役に立てるための定番の構成というものがある。
+
+\begin{itemize}
+  \item イベントログ (EFK, ELK stack, Splunk, etc)
+  \item パフォーマンスログ (Collectd, graphite, grafana, etc)
+\end{itemize}
+
+まずは、イベントログに関して見ていこう。これについては、お金があるなら何も考えずにSplunkを導入しよう。あれは神ツールである。大規模にまで容易にスケールし、ログの構造を考えずにストアが可能で、他のツールと連携しアラートまで行えるのである。Splunkと同じことが出来る製品は他にない。Splunkを導入する予算がないのであれば、OpenStackの正確なイベントログ監視は諦めるべきである。ちなみに、経験上、Splunkそのものの運用には、ほぼ工数を割くことはない。Splunk導入は、まさにOpenStack監視における分水嶺的プロダクトといえる。
+
+なぜ、そこまで言うのかというと、それは、OpenStackのエラーログ(及びTRACEログ)の出力にある。OpenStackは、知っての通りPythonで記述されている。つまりどういうことかというと、OpenStackのコンポーネントが何かエラーを発生させてPythonの例外処理に入った際、ログはトレース(Pythonのコールスタック)付きのCRITICALなログメッセージの形式で出力される、ということである。
+
+この例を見ていただければ、察しがつくと思うが、このようなログをそのままログ分析用のストレージに格納し分析まで可能にするプロダクトはSplunkだけである。
+
+\begin{lstlisting}
+  2013-02-25 21:05:51 17409 CRITICAL cinder [-] Bad or unexpected response from the storage volume backend API: volume group
+   cinder-volumes doesn't exist
+  2013-02-25 21:05:51 17409 TRACE cinder Traceback (most recent call last):
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/bin/cinder-volume", line 48, in <module>
+  2013-02-25 21:05:51 17409 TRACE cinder service.wait()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/service.py", line 422, in wait
+  2013-02-25 21:05:51 17409 TRACE cinder _launcher.wait()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/service.py", line 127, in wait
+  2013-02-25 21:05:51 17409 TRACE cinder service.wait()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/eventlet/greenthread.py", line 166, in wait
+  2013-02-25 21:05:51 17409 TRACE cinder return self._exit_event.wait()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/eventlet/event.py", line 116, in wait
+  2013-02-25 21:05:51 17409 TRACE cinder return hubs.get_hub().switch()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/eventlet/hubs/hub.py", line 177, in switch
+  2013-02-25 21:05:51 17409 TRACE cinder return self.greenlet.switch()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/eventlet/greenthread.py", line 192, in main
+  2013-02-25 21:05:51 17409 TRACE cinder result = function(*args, **kwargs)
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/service.py", line 88, in run_server
+  2013-02-25 21:05:51 17409 TRACE cinder server.start()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/service.py", line 159, in start
+  2013-02-25 21:05:51 17409 TRACE cinder self.manager.init_host()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/volume/manager.py", line 95,
+   in init_host
+  2013-02-25 21:05:51 17409 TRACE cinder self.driver.check_for_setup_error()
+  2013-02-25 21:05:51 17409 TRACE cinder File "/usr/lib/python2.7/dist-packages/cinder/volume/driver.py", line 116,
+   in check_for_setup_error
+  2013-02-25 21:05:51 17409 TRACE cinder raise exception.VolumeBackendAPIException(data=exception_message)
+  2013-02-25 21:05:51 17409 TRACE cinder VolumeBackendAPIException: Bad or unexpected response from the storage volume
+   backend API: volume group cinder-volumes doesn't exist
+  2013-02-25 21:05:51 17409 TRACE cinder
+\end{lstlisting}
+
+
 \section{Fluentdについて}
+
 \section{Kafkaについて}
+
 \section{InfluxDBについて}
+
 \section{OpenStack運用のためにチェックしたほうが良いログについて}
+
 \section{KVMからVMのメトリクスを取得する方法}
 
 
