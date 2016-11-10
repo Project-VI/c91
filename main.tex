@@ -111,5 +111,92 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 
 ところで、どう発音すればよいのかは謎である。
 
+\section{Searchlight}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Searchlight}
+\end{description}
+確か最初はGlanceのイメージを検索できるように、というような趣旨のプロジェクトだった気がするのですが、LibertyでのデザインサミットでGlanceに限らずOpenStackのリソースすべてを検索対象とする方針の転換がありました。今はサーチサービスという大義のようです。ミッションは「マルチテナンシーのある、スケーラブルなインデクサーとサーチエンジンの提供」です。
+
+OpenStackにかかわるあらゆるもの、例えばインスタンスなどの情報を集めて、Elasticsearchにインデックスし、それを検索可能にするAPIを提供します。Horizonのインスタンス検索機能は貧弱ですし、APIも文字列部分一致程度のリスティング機能しかありませんので、Searchlightは便利だと言えるでしょう。
+
+\section{Senlin}
+\begin{description}
+	\item[インストールガイド:] \url{http://docs.openstack.org/developer/senlin/install.html}
+	\item[開発者ガイド:] \url{http://docs.openstack.org/developer/senlin/developer/index.html}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Senlin}
+\end{description}
+インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。クラスタ化するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
+
+\begin{itemize}
+	\item 配置 (Placement)
+	\item 削除 (Deletion)
+	\item スケール (Scaling)
+	\item ヘルスチェック (Health)
+	\item ロードバランシング
+	\item その他
+\end{itemize}
+
+\section{Solum}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Solum}
+\end{description}
+Software Development Lifecycle Automation service: 直訳するとソフトウエア開発サイクルの自動化サービス、です。ソースコードのOSイメージへの配置やデプロイ作業を自動化し、OpenStackをアプリケーション開発フローと統合させることがミッションです。
+
+プロジェクトのゴールは開発者目線からとアプリケーションの可搬性、アプリケーションを作成するプログラミング言語に依存しない設計の3つから定められています。
+
+\subsection*{開発者の生産性}
+\begin{itemize}
+	\item 開発・テスト・ステージング・本番、などの環境を意識できるアプリケーションサイクルの管理ができる
+	\item 自動化されたデプロイフローによるCI/CD環境の構築
+	\item \verb|git push|
+	\item IDE連携
+\end{itemize}
+
+\subsection*{アプリケーションの可搬性}
+\begin{itemize}
+	\item Solumnで動くアプリケーションは、どのベンダーのOpenStackでも動く
+	\item パブリッククラウドでもプライベートクラウドでも動く
+	\item Novaベースでデザインされているため、Dockerに対応
+\end{itemize}
+
+\subsection*{言語・拡張性}
+\begin{itemize}
+	\item ランタイムをプラグイン形式にすることで、Solumn自体はアプリケーションを作成したのプログラミング言語に依存しない。
+	\item アドオン型式なので、独自の拡張が可能
+	\item つまり、ベンダー独自の拡張も可能ではある
+\end{itemize}
+
+NovaのDokcerを使う、という辺りに少し不安はあるものの、ニーズは大きそうなプロジェクトです。
+
+\section{Vitrage}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
+\end{description}
+
+\includegraphics{img/Vitrage_logo_finaly.png}
+
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。
+
+アーキテクチャは以下のようになっています
+
+\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+
+機能としては
+
+\begin{itemize}
+	\item コンピュートホストやネットワーク機器などの物理機器の状態と、その物理機に依存している仮想マシンとの紐付け
+	\item 直接OpenStackを監視するのではなく、システムの分析をベースにした状態の変化やアラーティング
+	\item アラートやイベントによる問題解決
+	\item ダッシュボード (Horizon)
+\end{itemize}
+
+とあるネットワークスイッチで障害が発生した場合、どの仮想マシンが影響を受けるか、といった分析が可能になります。これらの情報を持っていることで、物理機器のメンテナンス時の影響を把握することも簡単になりそうです。
+
+\section{Watcher}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Watcher}
+\end{description}
+OpenStackベースのクラウド環境でのリソース制御機構を提供しようというプロジェクトです。
+
 \chapter{あとがき}
 \end{document}
