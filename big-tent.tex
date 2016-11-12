@@ -1,0 +1,193 @@
+\chapter{Big-Tent解説}
+OpenStackはそれぞれのコンポーネントが疎結合であるため、連携が容易であることが利点の１つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論された上で定義されます。それぞれのコンポーネントでバージョンを一致させ、結合テストを行います。が、つまりは増えすぎました。さまざまな派生プロジェクト間での調整を行うことが難しくなり、足並みをそろえるだけで数ヶ月かかるようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈ではBigTent構想と言っています。
+
+とはいえ、プロジェクトを減らそうという話ではないわけなので、相変わらずたくさんのプロジェクトが乱立しています。そんなわけで、サブプロジェクトの一部を紹介してみることにしました。プロジェクトのリストはOpenStackのWikiでまとめられているのですが、すべて英語なので調べる気が起きていないひともいるかと思います。
+
+中には単一ベンダーが１人で頑張っているだけのプロジェクトもあります。また、機能が重複しているんじゃないかというプロジェクトもあります。ちゃんとWikiが整備されていなかったり説明が無かったりと、BigTentは玉石混交です。
+
+\section{CloudKitty}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/CloudKitty}
+	\item[Document:] \url{http://docs.openstack.org/developer/cloudkitty/}
+\end{description}
+Rating-as-a-serviceと説明されていますが、課金管理をしてくれます。
+
+Ceilometerは確かにメトリクスを計測してくれるのですが、課金に関してはそのスコープ外でした。課金のもととなるデータ(collector)、課金ポリシー(rating pipeline)、課金情報の保管(storage)、書き出し(writers)から構成されています。複数のコレクターや書き出しフォーマットを選ぶことができます。
+
+\section{Congress}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Congress}
+\end{description}
+
+\section{Designate}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Designate}
+\end{description}
+
+\includegraphics[width=0.5\textwidth]{img/logo-designate.pdf}
+
+みんな大好きDNSのサービスです。
+\begin{itemize}
+	\item ドメインとレコードの管理ができるAPIの提供
+	\item マルチテナントのサポート
+	\item NovaやNeutronと連携してレコードの自動追加
+\end{itemize}
+いまのところPowerDNSとBIND9をインストール時点でサポート。プラグイン型式で追加も可能のようです。
+
+\section{Dragonflow}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Dragonflow}
+	\item[Document:] \url{http://docs.openstack.org/developer/dragonflow/distributed_dragonflow.html}
+\end{description}
+\includegraphics[width=0.5\textwidth]{img/Df_logo.png}
+
+\section{Freezer}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Freezer}
+\end{description}
+
+\includegraphics[width=0.5\textwidth]{img/freezer_logo.png}
+
+バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。
+
+\section{Karbor}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Karbor}
+\end{description}
+旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。
+
+例えば以下のようなアプリケーションがあったとします。
+
+\includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
+
+このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
+\begin{itemize}
+	\item DBインスタンスは1つで、DBネットワークに接続されている
+	\item DBネットワークはRouter配下にある
+	\item Appインスタンスは1つで、Appネットワークに接続されている
+	\item AppネットワークはRouter配下にある
+	\item Webインスタンスは2つあり
+\end{itemize}
+などなど、これらの情報を保存しておくことになります。
+
+Karborではこれを依存グラフとして表現します
+
+\includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+
+\section{Kolla}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kolla}
+\end{description}
+OpenStackのコンポーネントをDocker化しようというプロジェクトです。OpenStackのAPIサーバーはImmutableなものとして扱うことが容易なので、すでにコンテナを使っている人も多いのではないかと思います。MissionにはOpenStackデプロイの簡素化や素早い増強ができるようにするとあります。
+
+特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。
+
+\section{Kuryr}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kuryr}
+\end{description}
+コンテナ用に設計されたネットワークプロジェクトです。もとはNeutronのサブプロジェクトでしたが、分離されました。コンテナに関しては長らくすったもんだを繰り返していましたが、ネットワークはKuryrになんとか落ち着いていきそうです。コンテナ自体はMagnumで落ち着きそうですし、OpenStackとコンテナはなんとか落としどころを見つけたのでしょうか。そもそも、仮想マシン(インスタンス)とコンテナではライフサイクルが違う、ということに無理があったそうで。
+
+ところで、どう発音すればよいのかは謎である。
+
+\section{Searchlight}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Searchlight}
+\end{description}
+確か最初はGlanceのイメージを検索できるように、というような趣旨のプロジェクトだった気がするのですが、LibertyでのデザインサミットでGlanceに限らずOpenStackのリソースすべてを検索対象とする方針の転換がありました。今はサーチサービスという大義のようです。ミッションは「マルチテナンシーのある、スケーラブルなインデクサーとサーチエンジンの提供」です。
+
+OpenStackにかかわるあらゆるもの、例えばインスタンスなどの情報を集めて、Elasticsearchにインデックスし、それを検索可能にするAPIを提供します。Horizonのインスタンス検索機能は貧弱ですし、APIも文字列部分一致程度のリスティング機能しかありませんので、Searchlightは便利だと言えるでしょう。
+
+\section{Senlin}
+\begin{description}
+	\item[インストールガイド:] \url{http://docs.openstack.org/developer/senlin/install.html}
+	\item[開発者ガイド:] \url{http://docs.openstack.org/developer/senlin/developer/index.html}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Senlin}
+\end{description}
+インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。クラスタ化するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
+
+\begin{itemize}
+	\item 配置 (Placement)
+	\item 削除 (Deletion)
+	\item スケール (Scaling)
+	\item ヘルスチェック (Health)
+	\item ロードバランシング
+	\item その他
+\end{itemize}
+
+\section{Solum}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Solum}
+\end{description}
+Software Development Lifecycle Automation service: 直訳するとソフトウエア開発サイクルの自動化サービス、です。ソースコードのOSイメージへの配置やデプロイ作業を自動化し、OpenStackをアプリケーション開発フローと統合させることがミッションです。
+
+プロジェクトのゴールは開発者目線からとアプリケーションの可搬性、アプリケーションを作成するプログラミング言語に依存しない設計の3つから定められています。
+
+\subsection*{開発者の生産性}
+\begin{itemize}
+	\item 開発・テスト・ステージング・本番、などの環境を意識できるアプリケーションサイクルの管理ができる
+	\item 自動化されたデプロイフローによるCI/CD環境の構築
+	\item \verb|git push|
+	\item IDE連携
+\end{itemize}
+
+\subsection*{アプリケーションの可搬性}
+\begin{itemize}
+	\item Solumnで動くアプリケーションは、どのベンダーのOpenStackでも動く
+	\item パブリッククラウドでもプライベートクラウドでも動く
+	\item Novaベースでデザインされているため、Dockerに対応
+\end{itemize}
+
+\subsection*{言語・拡張性}
+\begin{itemize}
+	\item ランタイムをプラグイン形式にすることで、Solumn自体はアプリケーションを作成したのプログラミング言語に依存しない。
+	\item アドオン型式なので、独自の拡張が可能
+	\item つまり、ベンダー独自の拡張も可能ではある
+\end{itemize}
+
+NovaのDokcerを使う、という辺りに少し不安はあるものの、ニーズは大きそうなプロジェクトです。
+
+\section{Vitrage}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
+\end{description}
+
+\includegraphics{img/Vitrage_logo_finaly.png}
+
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。
+
+アーキテクチャは以下のようになっています
+
+\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+
+機能としては
+
+\begin{itemize}
+	\item コンピュートホストやネットワーク機器などの物理機器の状態と、その物理機に依存している仮想マシンとの紐付け
+	\item 直接OpenStackを監視するのではなく、システムの分析をベースにした状態の変化やアラーティング
+	\item アラートやイベントによる問題解決
+	\item ダッシュボード (Horizon)
+\end{itemize}
+
+とあるネットワークスイッチで障害が発生した場合、どの仮想マシンが影響を受けるか、といった分析が可能になります。これらの情報を持っていることで、物理機器のメンテナンス時の影響を把握することも簡単になりそうです。
+
+\section{Watcher}
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Watcher}
+\end{description}
+OpenStackベースのクラウド環境でのリソース制御機構を提供しようというプロジェクトです。システムメトリクスの収集や最適化、アクションプランのプロセスが動作します。データセンターの運用コストやマイグレーションによるシステムパフォーマンスの改善、電源効率の改善なども視野に入っているようです。制御アルゴリズムはデフォルトで入っているもの以外にもプラグイン形式で追加することもできます。OpenStack運用者のためのプロジェクトを言えます。なんともピンと来ませんが、いくつがユースケースが紹介されています。
+
+\begin{itemize}
+	\item サーバー筐体の温度や空調、電源管理などの物理的なリソースの運用時に、仮想マシンのホスト間移動や適切なスケジューリングの機構を提供することができるようになる。
+	\item 最適化が必要になるしきい値の指定や変更が容易。
+	\item テストや開発環境ではリソースを詰めて、本番環境では少し余裕を持たせたスケジューリングをしたいなど、リソースセットの定義をすることができる。
+	\item リソースの使用状況を詳細に監視することができる。
+\end{itemize}
+
+以下のアーキテクチャで動作しています
+
+\begin{itemize}
+	\item 基本的にはメッセージキューからのイベント駆動
+	\item イベントにはOpenStackのあらゆるコンポーネントに対応可能。 (Novaのマイグレーション、Keystoneの認証など)
+	\item 逆にWatcherからイベントを発行させることも可能
+\end{itemize}
