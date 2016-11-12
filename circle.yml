@@ -5,5 +5,5 @@ machine:
     - docker
 test:
   post:
-    - "docker run -v ${PWD}:/mnt -w /mnt makisyu/texlive-2016 latexmk"
-    - cp build/*.pdf $CIRCLE_ARTIFACTS
+    - "docker run -v ${PWD}:/mnt -w /mnt makisyu/texlive-2016 latexmk main.tex"
+    - cp build/main.pdf $CIRCLE_ARTIFACTS
