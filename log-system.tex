@@ -83,23 +83,45 @@
 Splunkを導入できない場合、この類のログを正確に分析することは諦めよう。考えるだけ時間の無駄である。せいぜい、FluentdのFilterを駆使しまくって頑張ってくれ。
 
 
-\subsection{パフォーマンスログ}
-パフォーマンスログの扱いは悩ましい。いわゆる、メトリクス監視と言うものなのだが、これは一度製品選定を行うとなかなか他のものに切り替えることができないからだ。大抵の企業は、GraphiteやCollectedやSensuを駆使して監視をしているであろう。が、OpenStackを運用するような企業は比較的インフラ規模が大きくなることを見越しているはずである。前述の監視ツール群でも事足りるであろうが、個人的には、より簡単にスケールアウトさせるためにKafkaをメッセージキューとして使うことを勧めたい。なぜなら、データを転送するクライアント(= KVMホストetc)が増加すると、確実にデータを格納するストレージとの間の通信が詰まるからだ。
+\subsection{OpenStackホストのパフォーマンスログ}
+OpenStackホストのパフォーマンスログの扱いは悩ましい。いわゆる、メトリクス監視と言うものなのだが、これは一度製品選定を行うとなかなか他のものに切り替えることができないからだ。大抵の企業は、GraphiteやCollectedやSensuを駆使して監視をしているであろう。が、OpenStackを運用するような企業は比較的インフラ規模が大きくなることを見越しているはずである。前述の監視ツール群でも事足りるであろうが、個人的には、より簡単にスケールアウトさせるためにKafkaをメッセージキューとして使うことを勧めたい。なぜなら、データを転送するクライアント(= KVMホストetc)が増加すると、確実にデータを格納するストレージとの間の通信が詰まるからだ。あと、最近流行ってるじゃん。
 
 ということで、メトリクスに関するデータは、一旦Kafkaにためて、そこからFluentdでConsumerして、Time-Series DBに格納するというのがいいんじゃなかろうか。
 
 データコレクターに何を使うかは考えものである。自分の中では以下の3つが考えられる。
 
 \begin{itemize}
-	\item Fluentd + dstat Plugin and df Plugin
+	\item Fluentd + dstat and df Plugin
 	\item Telegraf
 	\item Metricbeat
 \end{itemize}
 
+Fluentd + dstat and df Plugin はそれはそれできちんと動く。ただ、Fluentdはメトリクス監視を目的として作られているプロダクトではなく、公式でdstatやdfのPluginをサポートしているのではない。したがって、Fluentdの互換性に対してそれらのプラグインが追従するかどうか、という問題がある。現在のバージョンでは稼働するのだが、今後使い続けられるかどうかはわからない。そういった意味で、Fluentdによる監視はあまりおすすめしない。ちなみにこのPlugin問題はすべてのPluginに対して言うことが出来る。よって、Fluentdを導入する場合には、GitHub上のFluentプロジェクトで管理されている公式サポートがあるPlugin郡のみを使うことを個人的にはおすすめする。
+
+ちなみに、Fluentdを使用した場合のメトリクス監視の方法については、こちらのQiita記事にまとめた。もし気になるようであれば、一読してみてほしい。なんなら、Qiitaのアカウントを作ってストックしておいていただけるとうれしい。
+
+http:\slash\slash{}qiita.com\slash{}kentarosasaki\slash{}items\slash{}f072773e08b8f2329b6e
+
+Telegrafは、InfluxDBに転送することを前提に設計されている。よって、通常メトリクスデータはInfluxDB Line Protocolの形式で転送される。以下のようなスタイルである。
+
+\begin{lstlisting}
+<measurement>[,<tag_key>=<tag_value>[,<tag_key>=<tag_value>]] <field_key>=<field_value>[,<field_key>=<field_value>] [<timestamp>]
+\end{lstlisting}
+
+これを、Kafkaに転送するのは良いが、Consumeが難しい。TelegrafでConsumeするのであれば、何も考えずにConsumeしてInfluxDBに投入するという流れにすることが出来るのだが、Telegraf自体は汎用性がなく、次章で少し説明するVMのデータのConsumeには向かない。よって、ConsumerはFluentd一択になるのだが、そうすると今度はInfluxDB Line Protocolのパースができなくなる。ただ、TelegrafからJsonでKafkaにデータを送ることが可能であるため、そこからかなり頑張ってFluentdでパースすれば、Telegrafを使うことも可能である。が、あまりおすすめできる方法ではない。
+
+ということで、個人的なオススメはMetrixbeatである。このプロダクトはもともとElasticsearchに転送することを想定して作られているためデータはすべてJson形式になっている。よって、Kafka ConsumerとしてFluentdを使用した場合でも、パースすることが容易となる。
+
+\subsection{稼働しているVMのパフォーマンスログ}
+OpenStackで稼働中のVMのメトリクススを取得する方法は、公式では無い。しかし、libvirtのAPIを使うことで簡単にVMのメトリクス監視が可能となる。その場合、データコレクターとしてはFluentdを使用すると良い。詳細については後述する。
+
+\subsection{ログ転送の全体像}
+大まかな全体像としてはこのような形になる。次の章からは1つずつ細かな説明をする。ここまで言及してなかったが、ログストレージとしては現時点でInfluxDB一択である。Elasticsearchは本来検索のためのものであり、時系列データを取り扱うのに最適とは言い難い。ただ問題は、InfluxDBが単一障害点になるということである(ただし、Enterprise版除く)。これを解決する手段としても、KafkaとConsumerで実現するダブルポスト方法がベターだと考えられる。
+
 \begin{lstlisting}
 +-------------------------------------------+
 |                                           |
-|           OpenStack (Metricbeat)          |
+|      OpenStack (Metricbeat, Fluentd)      |
 |                                           |
 +----+----------------+----------------+----+
      |                |                |
@@ -127,7 +149,6 @@ Splunkを導入できない場合、この類のログを正確に分析する�
 |                  |     |                  |
 +------------------+     +------------------+
 \end{lstlisting}
-
 
 \section{Fluentdについて}
 前のセクションでSplunkを賞賛したが、Fluentdに関しては使い所を限定すれば、とても良いプロダクトである。
