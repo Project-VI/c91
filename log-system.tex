@@ -96,11 +96,7 @@ OpenStackホストのパフォーマンスログの扱いは悩ましい。い�
 	\item Metricbeat
 \end{itemize}
 
-Fluentd + dstat and df Plugin はそれはそれできちんと動く。ただ、Fluentdはメトリクス監視を目的として作られているプロダクトではなく、公式でdstatやdfのPluginをサポートしているのではない。したがって、Fluentdの互換性に対してそれらのプラグインが追従するかどうか、という問題がある。現在のバージョンでは稼働するのだが、今後使い続けられるかどうかはわからない。そういった意味で、Fluentdによる監視はあまりおすすめしない。ちなみにこのPlugin問題はすべてのPluginに対して言うことが出来る。よって、Fluentdを導入する場合には、GitHub上のFluentプロジェクトで管理されている公式サポートがあるPlugin郡のみを使うことを個人的にはおすすめする。
-
-ちなみに、Fluentdを使用した場合のメトリクス監視の方法については、こちらのQiita記事にまとめた。もし気になるようであれば、一読してみてほしい。なんなら、Qiitaのアカウントを作ってストックしておいていただけるとうれしい。
-
-http:\slash\slash{}qiita.com\slash{}kentarosasaki\slash{}items\slash{}f072773e08b8f2329b6e
+Fluentd + dstat and df Plugin はそれはそれできちんと動く。ただ、Fluentdはメトリクス監視を目的として作られているプロダクトではなく、公式でdstatやdfのPluginをサポートしているのではない。したがって、Fluentdの互換性に対してそれらのプラグインが追従するかどうか、という問題がある。現在のバージョンでは稼働するのだが、今後使い続けられるかどうかはわからない。そういった意味で、Fluentdによる監視はあまりおすすめしない。ちなみにこのPlugin問題はすべてのPluginに対して言うことが出来る。よって、Fluentdを導入する場合には、GitHub上のFluentプロジェクトで管理されている公式サポートがあるPluginのみを使うことを個人的にはおすすめする。
 
 Telegrafは、InfluxDBに転送することを前提に設計されている。よって、通常メトリクスデータはInfluxDB Line Protocolの形式で転送される。以下のようなスタイルである。
 
@@ -110,7 +106,7 @@ Telegrafは、InfluxDBに転送することを前提に設計されている。�
 
 これを、Kafkaに転送するのは良いが、Consumeが難しい。TelegrafでConsumeするのであれば、何も考えずにConsumeしてInfluxDBに投入するという流れにすることが出来るのだが、Telegraf自体は汎用性がなく、次章で少し説明するVMのデータのConsumeには向かない。よって、ConsumerはFluentd一択になるのだが、そうすると今度はInfluxDB Line Protocolのパースができなくなる。ただ、TelegrafからJsonでKafkaにデータを送ることが可能であるため、そこからかなり頑張ってFluentdでパースすれば、Telegrafを使うことも可能である。が、あまりおすすめできる方法ではない。
 
-ということで、個人的なオススメはMetrixbeatである。このプロダクトはもともとElasticsearchに転送することを想定して作られているためデータはすべてJson形式になっている。よって、Kafka ConsumerとしてFluentdを使用した場合でも、パースすることが容易となる。
+ということで、個人的なオススメはMetricbeatである。このプロダクトはもともとElasticsearchに転送することを想定して作られているためデータはすべてJson形式になっている。よって、Kafka ConsumerとしてFluentdを使用した場合でも、パースすることが容易となる。
 
 \subsection{稼働しているVMのパフォーマンスログ}
 OpenStackで稼働中のVMのメトリクススを取得する方法は、公式では無い。しかし、libvirtのAPIを使うことで簡単にVMのメトリクス監視が可能となる。その場合、データコレクターとしてはFluentdを使用すると良い。詳細については後述する。
@@ -151,7 +147,245 @@ OpenStackで稼働中のVMのメトリクススを取得する方法は、公式
 \end{lstlisting}
 
 \section{Fluentdについて}
-前のセクションでSplunkを賞賛したが、Fluentdに関しては使い所を限定すれば、とても良いプロダクトである。
+前のセクションでSplunkを賞賛したが、Fluentdに関しては使い所を限定すれば、とても良いプロダクトである。Splunkは、データコレクターとしては汎用性は全く無く、Splunkにのみデータ転送が可能である。そういう意味で、Fluentdは、Splunk以外のログストレージ、その他の転送先(例えば、別のKafkaに転送するetc)にデータを転送する場合に、Pluginという形で対応が可能であるため、導入すればログシステム全体の拡張性が高くなる。ただし、前述のPluginの互換性問題には注意されたし。
+
+前の章で、メトリクス監視にはMetricbeatがよいと言ったが、一応dstat + df Pluginを使った例を記す。まぁこれでも監視できるよって感じの例である。一旦Kafkaにデータを送って、それをまたFluentdでConsumeするという方法である。
+
+\subsection{Kafka ProducerとしてのFluentdの設定}
+dstatが入っていない場合は、事前にdstatをインストールしておく必要がある。またFluentdはv0.12以降をインストールする必要がある。インストールが必要なアプリとFluentdのPluginは以下の通りである。
+
+
+\begin{itemize}
+	\item Fluentd v0.12以降
+	\item dstat
+\end{itemize}
+
+また、Fluentdに別途インストールが必要なPluginはこれである。夏辺りまでは、fluent-plugin-kafkaも別途インストールが必要だったが、最新版のtd-agentにはインストール時に同梱されているため別途入れる必要はない。がしかし、このKafka Pluginのバージョンは最新までアップデートしておくことをおすすめする。
+
+\begin{itemize}
+	\item fluent-plugin-record-reformer
+	\item fluent-plugin-dstat
+\end{itemize}
+
+Fluentdのconfは以下のような設定にする。
+
+\begin{lstlisting}
+<source>
+  @type dstat
+  tag raw_dstat
+  option -cmldrn
+  delay 10
+  tmp_file /tmp/dstat_all.csv
+</source>
+
+<source>
+  @type exec
+  tag raw_df
+  command df -TP | sed 1d | sed 's/%//' | sed 's/\s\+/\t/g'
+  run_interval 10s
+  format tsv
+  keys device,type,size,used,available,capacity,mounted_on
+</source>
+
+<filter raw_df>
+  @type record_transformer
+  enable_ruby true
+  <record>
+    hostname ${hostname}
+  </record>
+</filter>
+
+<match raw_dstat raw_df>
+  @type kafka_buffered
+  brokers kafkabroker001:9092,kafkabroker002:9092
+  default_topic metrics-topic
+  flush_interval 60
+  buffer_type file
+  buffer_path /tmp/td-agent.*.buffer
+  output_data_type json
+  output_include_tag true
+  output_include_time true
+</match>
+\end{lstlisting}
+
+Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、reord_reformaerで書き換えている。
+
+\subsection{Kafka ProducerとしてのFluentdの設定}
+今回、FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
+
+\begin{itemize}
+	\item fluent-plugin-record-reformer
+	\item fluent-plugin-influxdb
+\end{itemize}
+
+Fluentdのconfは以下のような設定にする。
+
+\begin{lstlisting}
+<source>
+  @type kafka_group
+  brokers kafkabroker001:9092,kafkabroker002:9092
+  consumer_group consumer_group_001
+  topics metrics-topic
+  format json
+</source>
+
+<match metrics-topic>
+  @type record_reformer
+  tag ${record['tag']}
+  enable_ruby true
+  auto_typecast true
+</match>
+
+<match raw_dstat>
+  @type copy
+  <store>
+    @type record_reformer
+    tag cpu
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      usr    ${record['dstat']['total_cpu_usage']['usr'].to_f}
+      sys    ${record['dstat']['total_cpu_usage']['sys'].to_f}
+      idl    ${record['dstat']['total_cpu_usage']['idl'].to_f}
+      wai    ${record['dstat']['total_cpu_usage']['wai'].to_f}
+      hiq    ${record['dstat']['total_cpu_usage']['hiq'].to_f}
+      siq    ${record['dstat']['total_cpu_usage']['siq'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+  <store>
+    @type record_reformer
+    tag mem
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      used   ${record['dstat']['memory_usage']['used'].to_f}
+      buff   ${record['dstat']['memory_usage']['buff'].to_f}
+      cach   ${record['dstat']['memory_usage']['cach'].to_f}
+      free   ${record['dstat']['memory_usage']['free'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+  <store>
+    @type record_reformer
+    tag load
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      1m     ${record['dstat']['load_avg']['1m'].to_f}
+      5m     ${record['dstat']['load_avg']['5m'].to_f}
+      15m    ${record['dstat']['load_avg']['15m'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+  <store>
+    @type record_reformer
+    tag disk
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      read   ${record['dstat']['dsk/total']['read'].to_f}
+      writ   ${record['dstat']['dsk/total']['writ'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+  <store>
+    @type record_reformer
+    tag diskio
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      read   ${record['dstat']['io/total']['read'].to_f}
+      writ   ${record['dstat']['io/total']['writ'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+  <store>
+    @type record_reformer
+    tag net
+    enable_ruby true
+    auto_typecast true
+    renew_record true
+    <record>
+      host   ${record['hostname']}
+      recv   ${record['dstat']['net/total']['recv'].to_f}
+      send   ${record['dstat']['net/total']['send'].to_f}
+      time   ${record['time']}
+    </record>
+  </store>
+</match>
+
+<match raw_df>
+  @type record_reformer
+  tag df
+  enable_ruby true
+  auto_typecast true
+  renew_record true
+  <record>
+    host       ${record['hostname']}
+    size       ${record['size'].to_f}
+    used       ${record['used'].to_f}
+    available  ${record['available'].to_f}
+    capacity   ${record['capacity'].to_f}
+    device     ${record['device']}
+    type       ${record['type']}
+    mounted_on ${record['mounted_on']}
+    time       ${record['time']}
+  </record>
+</match>
+
+<filter df cpu mem load disk diskio net>
+  @type record_transformer
+  renew_time_key time
+</filter>
+
+<filter df cpu mem load disk diskio net>
+  @type record_transformer
+  remove_keys time
+</filter>
+
+<match df cpu mem load disk diskio net>
+  @type copy
+  <store>
+    @type influxdb
+    host influxdb001
+    port 8086
+    dbname metrics_db
+    user kafka
+    password kafka
+    use_ssl false
+    verify_ssl false
+    tag_keys ["host", "device"]
+    time_precision s
+    flush_interval 10s
+  </store>
+  <store>
+    @type influxdb
+    host influxdb002
+    port 8086
+    dbname metrics_db
+    user kafka
+    password kafka
+    use_ssl false
+    verify_ssl false
+    tag_keys ["host", "device", "type", "mounted_on",]
+    time_precision s
+    flush_interval 10s
+  </store>
+</match>
+\end{lstlisting}
+
+InfluxDBのホスト名をinfluxdb001とinfluxdb002とし、DB名を両方ともmetrics_dbと仮定している。また、InfluxDBのTagには、Strings型で取得しているhostとdeviceを設定している。
 
 \section{Kafkaについて}
 
