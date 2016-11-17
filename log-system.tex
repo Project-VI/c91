@@ -208,7 +208,7 @@ Fluentdのconfは以下のような設定にする。
 </match>
 \end{lstlisting}
 
-Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、reord_reformaerで書き換えている。
+Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、\verb|reord_reformer|で書き換えている。
 
 \subsection{Kafka ProducerとしてのFluentdの設定}
 今回、FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
@@ -385,7 +385,7 @@ Fluentdのconfは以下のような設定にする。
 </match>
 \end{lstlisting}
 
-InfluxDBのホスト名をinfluxdb001とinfluxdb002とし、DB名を両方ともmetrics_dbと仮定している。また、InfluxDBのTagには、Strings型で取得しているhostとdeviceを設定している。
+InfluxDBのホスト名をinfluxdb001とinfluxdb002とし、DB名を両方とも\verb|metrics_db|と仮定している。また、InfluxDBのTagには、Strings型で取得しているhostとdeviceを設定している。
 
 \section{Kafkaについて}
 
