@@ -1,5 +1,5 @@
-\chapter{Big-Tent解説}
-OpenStackはそれぞれのコンポーネントが疎結合であるため、連携が容易であることが利点の１つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論された上で定義されます。それぞれのコンポーネントでバージョンを一致させ、結合テストを行います。が、つまりは増えすぎました。さまざまな派生プロジェクト間での調整を行うことが難しくなり、足並みをそろえるだけで数ヶ月かかるようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈ではBigTent構想と言っています。
+\chapter{BigTent解説}
+OpenStackはそれぞれのコンポーネントが疎結合であるため、連携が容易であることが利点の１つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論された上で定義されます。それぞれのコンポーネントでバージョンを一致させ、結合テストを行います。が、つまりは増えすぎました。さまざまな派生プロジェクト間での調整を行うことが難しくなり、足並みをそろえるだけで数ヶ月かかるようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈では「BigTent構想」と言っています。
 
 とはいえ、プロジェクトを減らそうという話ではないわけなので、相変わらずたくさんのプロジェクトが乱立しています。そんなわけで、サブプロジェクトの一部を紹介してみることにしました。プロジェクトのリストはOpenStackのWikiでまとめられているのですが、すべて英語なので調べる気が起きていないひともいるかと思います。
 
@@ -8,47 +8,185 @@ OpenStackはそれぞれのコンポーネントが疎結合であるため、�
 \section{CloudKitty}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/CloudKitty}
-	\item[Document:] \url{http://docs.openstack.org/developer/cloudkitty/}
+	\item[開発者向けドキュメント:] \url{http://docs.openstack.org/developer/cloudkitty/}
+	\item[IRC:] \verb|#cloudkitty| on freenode
 \end{description}
-Rating-as-a-serviceと説明されていますが、課金管理をしてくれます。
+Rating-as-a-serviceと説明されていますが、課金管理をしてくれます。さまざまなメトリクスを収集し、課金ルールを定義することができます。とあるITコンサルで開発されていたものをアトランタサミットでプロトタイプを紹介してみたところ、思ったより反応が良かったのでOpenStackのプロジェクトとしてオープンに開発していくことにしたようです。
 
-Ceilometerは確かにメトリクスを計測してくれるのですが、課金に関してはそのスコープ外でした。課金のもととなるデータ(collector)、課金ポリシー(rating pipeline)、課金情報の保管(storage)、書き出し(writers)から構成されています。複数のコレクターや書き出しフォーマットを選ぶことができます。
+一般的に課金ルールや配賦方法は、技術的というよりはビジネス的な要件から発生し、その手法もさまざまです。そのため、一般的な課金・配賦ルールはビルトインで定義されているものの、プラグイン型式で独自のルールを組み込むこともできるようになっています。Horizonとの統合も当初から設計されています。
+
+Ceilometerは確かにメトリクスを計測してくれるのですが、課金に関してはそのスコープ外でした。CloudKittyは以下のプロセスから構成されています。
+
+\begin{itemize}
+	\item 課金のもととなるデータ (collector)
+	\item 課金ポリシー (rating pipeline)
+	\item 課金情報の保管 (storage)
+	\item 書き出し (writers)
+\end{itemize}
+
+複数のコレクターや書き出しフォーマットを選ぶことができます。
 
 \section{Congress}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Congress}
+	\item[IRC:] \verb|#congress| on freenode
 \end{description}
+OpenStackで構成されたインフラにガバナンスを効かせるためのコンポーネントです。と、wikiには書いてありますが、イメージが掴みにくいですね。文章量もかなりあるのですが。
+
+物理プロビジョンニングが主流だった時代と異なり、仮想的なリソースを管理するためには運用ルールを徹底させるには、その自動化が必要になります。仮想マシンを１つ作るだけで毎回コアファイヤーウォール設定変更の許可を書類でもらうようなことは考えたくありません。Congressはネットワークやコンピュートリソース、ネットワークリソースに対してのガバナンスフレームワークをオープンソースコミュニティで開発していこうとするプロジェクトです。例えば
+
+\begin{itemize}
+	\item アプリケーションAはアプリケーションBとの通信のみ許可される
+	\item テナントAがBグループの場合のみ、テナントAの仮想マシンはパブリックネットワークに接続される
+	\item 仮想マシンAは物理的距離の遠いストレージBはマウントできない
+\end{itemize}
+
+などのルールを設定することができます。これらのルールをDatalog型式で記述します。
 
 \section{Designate}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Designate}
+	\item[IRC:] \verb|#openstack-dns| on freenode
 \end{description}
 
-\includegraphics[width=0.5\textwidth]{img/logo-designate.pdf}
+\begin{wrapfigure}[3]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/logo-designate.pdf}
+	\end{center}
+\end{wrapfigure}
 
 みんな大好きDNSのサービスです。
+
 \begin{itemize}
 	\item ドメインとレコードの管理ができるAPIの提供
 	\item マルチテナントのサポート
+	\item Keystoneでの認証
 	\item NovaやNeutronと連携してレコードの自動追加
 \end{itemize}
-いまのところPowerDNSとBIND9をインストール時点でサポート。プラグイン型式で追加も可能のようです。
+
+いまのところPowerDNSとBIND9をインストール時点でサポート。プラグイン型式で追加も可能のようです。アーキテクチャはwikiで説明されています。
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Designate-Arch.png}
+	\end{center}
+\end{figure}
+
+\begin{description}
+	\item[API:] APIリクエストを受け付けるプロセスです。認証はKeystoneへ、実際の操作はMQへ転送します。
+	\item[Central:] MQからイベントを受け取ります。DNS操作を行うというよりは、Designateデータベースへの書き込みを担当します。レコード操作は別のプロセスが行います。
+	\item[MiniDNS:] \verb|DNS NOTIFY|の送信や\verb|AXFR|に答えたりします。
+	\item[Pool Manager:] Designate管理下にあるDNSを記憶し、同期することが責務です。
+	\item[Zone Manager:] DNSの状態やゾーンの状態を定期的に監視し、Ceilometerなどに保存します。
+	\item[Sink:] NovaやNeutronからのイベントを待ちます。
+	\item[DNS Backend:] PowerDNS、BINDなど、実際にネームサービスを提供するサーバーです。
+\end{description}
+
+実際のコマンド例を見てみるとイメージしやすいでしょうか。ドメインの作成とレコードの作成は以下のようになるようです。
+
+\begin{lstlisting}
+$ designate domain-create --name designate-example.com. --email designate@example.org
++-------------+--------------------------------------+
+| Field       | Value                                |
++-------------+--------------------------------------+
+| description | None                                 |
+| created_at  | 2015-02-13T16:23:26.533547           |
+| updated_at  | None                                 |
+| email       | designate@example.org                |
+| ttl         | 3600                                 |
+| serial      | 1423844606                           |
+| id          | ae59d62b-d655-49a0-ab4b-ea536d845a32 |
+| name        | designate-example.com.               |
++-------------+--------------------------------------+
+
+$ designate record-create ae59d62b-d655-49a0-ab4b-ea536d845a32 --name www.designate-example.com. --type A --data 192.0.2.1
++-------------+--------------------------------------+
+| Field       | Value                                |
++-------------+--------------------------------------+
+| description | None                                 |
+| type        | A                                    |
+| created_at  | 2015-02-13T16:43:10.952601           |
+| updated_at  | None                                 |
+| domain_id   | ae59d62b-d655-49a0-ab4b-ea536d845a32 |
+| priority    | None                                 |
+| ttl         | None                                 |
+| data        | 192.0.2.1                            |
+| id          | 10b31f72-2358-466c-90d2-79aa015fbea4 |
+| name        | www.designate-example.com.           |
++-------------+--------------------------------------+
+\end{lstlisting}
+
+プライベートDNSはなかなか自動化が進まなかったりする分野ではあるのですが、ニーズもまた大きいと思います。クラウドネイティブ、という考えからするとDNSに依存するのはあまり得策ではないのですが……。とはいえやはりDNSは必要な環境も多いだろうと思うので、注目されているコンポーネントでしょう。
 
 \section{Dragonflow}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Dragonflow}
-	\item[Document:] \url{http://docs.openstack.org/developer/dragonflow/distributed_dragonflow.html}
+	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/dragonflow/distributed_dragonflow.html}
+	\item[IRC:] \verb|#openstack-dragonflow| on freenode
 \end{description}
-\includegraphics[width=0.5\textwidth]{img/Df_logo.png}
+
+\begin{wrapfigure}[4]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/Df_logo.png}
+	\end{center}
+\end{wrapfigure}
+
+Neutron APIを使った分散型SDNコントローラー、らしいのですが、それだけ聞くとかなり壮大なプロジェクトですね。分散型のスイッチ、ルーター、DHCPなどを提供します。プロジェクトのミッションはNeutronに効率の良いシンプルなSDNを実装することです。
+
+\begin{itemize}
+	\item SDNの思想をNeutron APIに実装
+	\item オープンソースコミュニティでの開発
+	\item 軽量でシンプルであることをキープ。確かにNeutronのコードベースは日に日に肥大化していますからね。
+	\item ネットワークのパフォーマンスに妥協しない。
+	\item 分散型であることこそ至高
+\end{itemize}
+
+アーキテクチャを見ると、Open vSwitchのベースになっているようです。
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/dragonflow_distributed_architecture.png}
+\end{figure}
+
+コンテナ、NAT、障害検知などもロードマップに入っています。RJ45がドラゴンの口に見える、というのはまぁ、気持ちは分かりますが。
 
 \section{Freezer}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Freezer}
+	\item[IRC:] \verb|#openstack-freezer|
 \end{description}
 
-\includegraphics[width=0.5\textwidth]{img/freezer_logo.png}
+\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/freezer_logo.png}
+	\end{center}
+\end{wrapfigure}
 
-バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。
+バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間での6ックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
+
+\begin{itemize}
+	\item セグメントサイズ(バックアップに使用するメモリ容量)
+	\item キューサイズ(IOや帯域、メモリ・CPUの制限に応じて可変)
+	\item バックアッププロセスの優先度
+	\item 帯域制限
+	\item 暗号化(AES-256-CFB)
+	\item 圧縮(zlib・bzip2・xz/lzmaなど)
+	\item 並列アップロードやさまざまなストレージメディアに対応(SwiftやSSHでリモートホストへの転送など)
+	\item ファイルベースの差分バックアップ(\verb|tar|など)、ブロックベースの差分バックアップ(\verb|rsync|など)
+	\item マルチプラットフォーム対応(LinuxではLVMなど、WindowsではVSSを用いる)
+	\item 自動バックアップファイルローテーション
+	\item バックアップ前後でのタスク実行
+	\item 複数ノードでの同期バックアップ・リストア
+\end{itemize}
+
+Horizonとの統合も開発が進んでおり、CLIでできることがHorizonでもできるようになる予定です。以下のプロセスで構成されています。
+
+\begin{description}
+	\item[API:] REST APIの応答とスケジューラーへ受け渡しを担当します。実際のバックアップ作業は行わず、Schedulerに必要な情報を受け渡し、その結果を返すだけです。
+	\item[Agent:] データをバックアップしたいリースで動くエージョンと型のプロセスです。実際にバップアップを実行します。単体で動かすこともできますが、Schedulerにより開始されることもあります。
+	\item[Scheduler:] データをバックアップしたいノードで稼働する、Agentを管理するプロセスです。APIサーバーからの依頼を受け付け、バックアップ作業前後のタスクなどを担当します。Agentの動作状況を監視し、APIに返答します。並列バックアップのスケジューリングを担当します。
+\end{description}
+
+ノードで稼働するプロセスの存在が気にはなりますが、それもSSH経由などでリモートから可能であれば、十分実用可能性があると思います。オンプレ製品などにインストールするのは気が引けますね。
 
 \section{Karbor}
 \begin{description}
@@ -61,6 +199,7 @@ Ceilometerは確かにメトリクスを計測してくれるのですが、課�
 \includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
 
 このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
+
 \begin{itemize}
 	\item DBインスタンスは1つで、DBネットワークに接続されている
 	\item DBネットワークはRouter配下にある
@@ -68,11 +207,12 @@ Ceilometerは確かにメトリクスを計測してくれるのですが、課�
 	\item AppネットワークはRouter配下にある
 	\item Webインスタンスは2つあり
 \end{itemize}
-などなど、これらの情報を保存しておくことになります。
 
-Karborではこれを依存グラフとして表現します
+などなど、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します
 
 \includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+
+Wikiを見ると分かりますが、割と複雑なシステム構成になっており、デプロイするだけでも大変そうです。コンポーネントが疎結合で、組み合わせることでシステムを作っていく指向とは逆行しそうですが、まぁクラウドエンタープライズ色がかなり強いプロジェクトですね。
 
 \section{Kolla}
 \begin{description}
@@ -81,6 +221,8 @@ Karborではこれを依存グラフとして表現します
 OpenStackのコンポーネントをDocker化しようというプロジェクトです。OpenStackのAPIサーバーはImmutableなものとして扱うことが容易なので、すでにコンテナを使っている人も多いのではないかと思います。MissionにはOpenStackデプロイの簡素化や素早い増強ができるようにするとあります。
 
 特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。
+
+コアコンポーネントだけでなく、CephやManila、Kuryrなどもデプロイできるようです。Kibanaもデプロイできるようで、これはOpenStackの監視に使う目的でしょう。
 
 \section{Kuryr}
 \begin{description}
@@ -152,13 +294,17 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
 \end{description}
 
-\includegraphics{img/Vitrage_logo_finaly.png}
+\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
+	\end{center}
+\end{wrapfigure}
 
-OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。アーキテクチャは以下のようになっています。
 
-アーキテクチャは以下のようになっています
-
-\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+\end{figure}
 
 機能としては
 
