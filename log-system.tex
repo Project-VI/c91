@@ -387,9 +387,56 @@ Fluentdのconfは以下のような設定にする。
 
 InfluxDBのホスト名をinfluxdb001とinfluxdb002とし、DB名を両方ともmetrics_dbと仮定している。また、InfluxDBのTagには、Strings型で取得しているhostとdeviceを設定している。
 
-\section{Kafkaについて}
 
 \section{InfluxDBについて}
+\subsection{クラスタリング機能が無くなったOSS版InfluxDBで簡単な冗長性を持たせる}
+OSS版InfluxDBについては元々クラスタリング機能が存在したが、v0.12以降はOSS版InfluxDBでのクラスタリングは廃止され、以後Influx Enterprise及び、Influx Cloudを通じての提供する方針になっている。
+
+日本語の詳細記事はこちらを是非参照してみてほしい。
+
+\begin{itemize}
+	\item https://yakst.com/en/posts/3870
+\end{itemize}
+
+今回は、OSS版InfluxDBを使う前提なので、カジュアルにDBへのダブルポストを行い、かつ耐障害性もそこそこある構成にするためにKafkaを使っている。Kafkaを使うことで、メトリクスデータは、InfluxDBに投入される前の段階において、Retention期間中Kafkaクラスター内で冗長化された状態で保持される。また、Kafka Consumerとして使うFluentdもConsumer Groupを用いて複数台にスケールしている。そうすることで、監視対象のクライアントサイドからInfluxDBまでのどこで障害が起こっても、どこかの地点では確実にデータが保持され、SPOFになることはないはずである。
+
+
+\subsection{InfluxDBを構築する}
+2016年も終わりそろそろ2017年なるという時代なので、マニュアルで構築しようとかいう人はいないと信じてる。InfluxDBには、かなり出来の良いChefのレシピが転がっているので、それを使うのが妥当である。
+
+
+\begin{itemize}
+	\item https://github.com/bdangit/chef-influxdb
+\end{itemize}
+
+最近これを使ってv1.1.0までアップデートしたが、特に問題ない。最近のバージョンでも安定してデプロイが可能である。ちなみに、僕も少しだけこのレポジトリにコントリビュートしたというのは、ここだけの話である。
+
+構築できたら、その後、最低限のDBの作成まではやっておく必要がある。Measurementsはデータ投入時に勝手に作成されるため何もしなくて問題ない。
+
+
+\begin{lstlisting}
+# Inlfuxdbのコンソールに入る
+$$$ influx
+
+# adminユーザを作成する
+> CREATE USER admin WITH PASSWORD 'xxxxxxxx' WITH ALL PRIVILEGES
+
+# adminユーザでログインし直すことが可能
+$ influx -username admin -password xxxxxxxx
+
+# metrics_dbというDBを作成(同時にRetention期間14日のポリシーshortを作成)
+> CREATE DATABASE metrics_db WITH DURATION 14d REPLIDATION 1 SHARD DURATION 1d NAME short
+
+# 必要ならnon-adminユーザも作っておく(以下は1例)
+> CREATE USER kafkaconsumer WITH PASSWORD 'kafkaconsumer'
+> CREATE USER grafana WITH PASSWORD 'grafana'
+> CREATE USER openstackadmin WITH PASSWORD 'openstackadmin'
+> GRANT ALL ON metrics_db TO kafkaconsumer
+> GRANT READ ON metrics_db TO grafana
+> GRANT ALL ON metrics_db TO openstackadmin
+\end{lstlisting}
+
+InfluxDBに関しては、これくらいである。特に運用も難しくなく、よしなに動いてくれる。負荷も低く、ディスク容量も食わない、現状最高のTime-series DBである。
 
 \section{OpenStack運用のためにチェックしたほうが良いログについて}
 
