@@ -56,12 +56,14 @@ OpenStackで構成されたインフラにガバナンスを効かせるため�
 \end{wrapfigure}
 
 みんな大好きDNSのサービスです。
+
 \begin{itemize}
 	\item ドメインとレコードの管理ができるAPIの提供
 	\item マルチテナントのサポート
 	\item Keystoneでの認証
 	\item NovaやNeutronと連携してレコードの自動追加
 \end{itemize}
+
 いまのところPowerDNSとBIND9をインストール時点でサポート。プラグイン型式で追加も可能のようです。アーキテクチャはwikiで説明されています。
 
 \begin{figure}
@@ -79,6 +81,40 @@ OpenStackで構成されたインフラにガバナンスを効かせるため�
 	\item[Sink:] NovaやNeutronからのイベントを待ちます。
 	\item[DNS Backend:] PowerDNS、BINDなど、実際にネームサービスを提供するサーバーです。
 \end{description}
+
+実際のコマンド例を見てみるとイメージしやすいでしょうか。ドメインの作成とレコードの作成は以下のようになるようです。
+
+\begin{lstlisting}
+$ designate domain-create --name designate-example.com. --email designate@example.org
++-------------+--------------------------------------+
+| Field       | Value                                |
++-------------+--------------------------------------+
+| description | None                                 |
+| created_at  | 2015-02-13T16:23:26.533547           |
+| updated_at  | None                                 |
+| email       | designate@example.org                |
+| ttl         | 3600                                 |
+| serial      | 1423844606                           |
+| id          | ae59d62b-d655-49a0-ab4b-ea536d845a32 |
+| name        | designate-example.com.               |
++-------------+--------------------------------------+
+
+$ designate record-create ae59d62b-d655-49a0-ab4b-ea536d845a32 --name www.designate-example.com. --type A --data 192.0.2.1
++-------------+--------------------------------------+
+| Field       | Value                                |
++-------------+--------------------------------------+
+| description | None                                 |
+| type        | A                                    |
+| created_at  | 2015-02-13T16:43:10.952601           |
+| updated_at  | None                                 |
+| domain_id   | ae59d62b-d655-49a0-ab4b-ea536d845a32 |
+| priority    | None                                 |
+| ttl         | None                                 |
+| data        | 192.0.2.1                            |
+| id          | 10b31f72-2358-466c-90d2-79aa015fbea4 |
+| name        | www.designate-example.com.           |
++-------------+--------------------------------------+
+\end{lstlisting}
 
 プライベートDNSはなかなか自動化が進まなかったりする分野ではあるのですが、ニーズもまた大きいと思います。クラウドネイティブ、という考えからするとDNSに依存するのはあまり得策ではないのですが……。とはいえやはりDNSは必要な環境も多いだろうと思うので、注目されているコンポーネントでしょう。
 
@@ -105,7 +141,13 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 	\item 分散型であることこそ至高
 \end{itemize}
 
-コンテナ、NAT、障害検知などもロードマップに入っています。
+アーキテクチャを見ると、Open vSwitchのベースになっているようです。
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/dragonflow_distributed_architecture.png}
+\end{figure}
+
+コンテナ、NAT、障害検知などもロードマップに入っています。RJ45がドラゴンの口に見える、というのはまぁ、気持ちは分かりますが。
 
 \section{Freezer}
 \begin{description}
@@ -113,19 +155,38 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 	\item[IRC:] \verb|#openstack-freezer|
 \end{description}
 
-\begin{wrapfigure}[4]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/freezer_logo.png}
 	\end{center}
 \end{wrapfigure}
 
-バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。Horizonとの統合も開発が進んでいます。
+バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間での6ックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
+
+\begin{itemize}
+	\item セグメントサイズ(バックアップに使用するメモリ容量)
+	\item キューサイズ(IOや帯域、メモリ・CPUの制限に応じて可変)
+	\item バックアッププロセスの優先度
+	\item 帯域制限
+	\item 暗号化(AES-256-CFB)
+	\item 圧縮(zlib・bzip2・xz/lzmaなど)
+	\item 並列アップロードやさまざまなストレージメディアに対応(SwiftやSSHでリモートホストへの転送など)
+	\item ファイルベースの差分バックアップ(\verb|tar|など)、ブロックベースの差分バックアップ(\verb|rsync|など)
+	\item マルチプラットフォーム対応(LinuxではLVMなど、WindowsではVSSを用いる)
+	\item 自動バックアップファイルローテーション
+	\item バックアップ前後でのタスク実行
+	\item 複数ノードでの同期バックアップ・リストア
+\end{itemize}
+
+Horizonとの統合も開発が進んでおり、CLIでできることがHorizonでもできるようになる予定です。以下のプロセスで構成されています。
 
 \begin{description}
-	\item[API:] REST APIの応答のみを担当します。実際のバックアップ作業は行わず、Schedulerに必要な情報を受け渡し、その結果を返すだけです。
-	\item[Agent:] 実際にバップアップを実行するプロセスです。Schedulerにより開始されます。
-	\item[Scheduler:] Agentを実行するプロセスです。APIサーバーから情報を受け取ります。Agentの動作状況を監視し、APIに返答します。並列バックアップのスケジューリングを担当します。
+	\item[API:] REST APIの応答とスケジューラーへ受け渡しを担当します。実際のバックアップ作業は行わず、Schedulerに必要な情報を受け渡し、その結果を返すだけです。
+	\item[Agent:] データをバックアップしたいリースで動くエージョンと型のプロセスです。実際にバップアップを実行します。単体で動かすこともできますが、Schedulerにより開始されることもあります。
+	\item[Scheduler:] データをバックアップしたいノードで稼働する、Agentを管理するプロセスです。APIサーバーからの依頼を受け付け、バックアップ作業前後のタスクなどを担当します。Agentの動作状況を監視し、APIに返答します。並列バックアップのスケジューリングを担当します。
 \end{description}
+
+ノードで稼働するプロセスの存在が気にはなりますが、それもSSH経由などでリモートから可能であれば、十分実用可能性があると思います。オンプレ製品などにインストールするのは気が引けますね。
 
 \section{Karbor}
 \begin{description}
@@ -138,6 +199,7 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 \includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
 
 このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
+
 \begin{itemize}
 	\item DBインスタンスは1つで、DBネットワークに接続されている
 	\item DBネットワークはRouter配下にある
@@ -145,11 +207,12 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 	\item AppネットワークはRouter配下にある
 	\item Webインスタンスは2つあり
 \end{itemize}
-などなど、これらの情報を保存しておくことになります。
 
-Karborではこれを依存グラフとして表現します
+などなど、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します
 
 \includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+
+Wikiを見ると分かりますが、割と複雑なシステム構成になっており、デプロイするだけでも大変そうです。コンポーネントが疎結合で、組み合わせることでシステムを作っていく指向とは逆行しそうですが、まぁクラウドエンタープライズ色がかなり強いプロジェクトですね。
 
 \section{Kolla}
 \begin{description}
@@ -158,6 +221,8 @@ Karborではこれを依存グラフとして表現します
 OpenStackのコンポーネントをDocker化しようというプロジェクトです。OpenStackのAPIサーバーはImmutableなものとして扱うことが容易なので、すでにコンテナを使っている人も多いのではないかと思います。MissionにはOpenStackデプロイの簡素化や素早い増強ができるようにするとあります。
 
 特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。
+
+コアコンポーネントだけでなく、CephやManila、Kuryrなどもデプロイできるようです。Kibanaもデプロイできるようで、これはOpenStackの監視に使う目的でしょう。
 
 \section{Kuryr}
 \begin{description}
@@ -229,13 +294,17 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
 \end{description}
 
-\includegraphics{img/Vitrage_logo_finaly.png}
+\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
+	\end{center}
+\end{wrapfigure}
 
-OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。アーキテクチャは以下のようになっています。
 
-アーキテクチャは以下のようになっています
-
-\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+\end{figure}
 
 機能としては
 
