@@ -154,7 +154,6 @@ OpenStackで稼働中のVMのメトリクススを取得する方法は、公式
 \subsection{Kafka ProducerとしてのFluentdの設定}
 dstatが入っていない場合は、事前にdstatをインストールしておく必要がある。またFluentdはv0.12以降をインストールする必要がある。インストールが必要なアプリとFluentdのPluginは以下の通りである。
 
-
 \begin{itemize}
 	\item Fluentd v0.12以降
 	\item dstat
@@ -439,5 +438,30 @@ $ influx -username admin -password xxxxxxxx
 InfluxDBに関しては、これくらいである。特に運用も難しくなく、よしなに動いてくれる。負荷も低く、ディスク容量も食わない、現状最高のTime-series DBである。
 
 \section{OpenStack運用のためにチェックしたほうが良いログについて}
+イベントログについて言及すると、当たり前だがチェックしたほうがいいログはたくさんある。とりあえず、出力されてるログは全部集めよう。
+
+前述のとおり、イベントログはSplunkで分析するのがベターである。どういう検索分を使ってSplunk上でアラートやレポートやダッシュボードを作成すればいいかというところは各人によって異なってしまうので、ここで具体的な例を出すことはできない。作成したほうがいいアラートの一例をここに記す。
+
+\begin{itemize}
+	\item DHCPエラーチェック
+	\item 全コンポーネントのログレベルERROR以上のログチェック
+	\item APIのヘルスチェック
+	\item 物理ディスクの障害検知
+	\item 各プロジェクトごとのCinderボリューム使用率閾値チェック
+	\item 各プロジェクトごとのNovaのvCPU使用率閾値チェック
+	\item Glanceのスナップショット失敗ログチェック
+	\item nf_conntrack_countの値チェック
+\end{itemize}
+
+ダッシュボードの一例はこういったものがある。
+
+\begin{itemize}
+	\item ユーザのオペレーションログのモニタリング
+	\item VM使用率のモニタリング
+	\item CinderボリュームのQuota値モニタリング
+	\item NovaのvCPU, MemoryなどのQuota値モニタリング
+\end{itemize}
+
+あくまで、一例である。ぶっちゃけると、こういったアラートやダッシュボードはOpenStack運用開始時点では１つもなかった。ありとあらゆるトラブルに遭遇する中でちょっとづつ増えていったしだいである。
 
 \section{KVMからVMのメトリクスを取得する方法}
