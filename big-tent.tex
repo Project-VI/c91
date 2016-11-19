@@ -215,9 +215,13 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 Wikiを見ると分かりますが、割と複雑なシステム構成になっており、デプロイするだけでも大変そうです。コンポーネントが疎結合で、組み合わせることでシステムを作っていく指向とは逆行しそうですが、まぁクラウドエンタープライズ色がかなり強いプロジェクトですね。
 
 \section{Kolla}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kolla}
+	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/kolla/}
+	\item[IRC:] \verb|#openstack-kolla|
 \end{description}
+
 OpenStackのコンポーネントをDocker化しようというプロジェクトです。OpenStackのAPIサーバーはImmutableなものとして扱うことが容易なので、すでにコンテナを使っている人も多いのではないかと思います。MissionにはOpenStackデプロイの簡素化や素早い増強ができるようにするとあります。
 
 特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。
@@ -225,28 +229,69 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 コアコンポーネントだけでなく、CephやManila、Kuryrなどもデプロイできるようです。Kibanaもデプロイできるようで、これはOpenStackの監視に使う目的でしょう。
 
 \section{Kuryr}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kuryr}
+	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/kuryr/}
+	\item[IRC:] \verb|#openstack-kuryr|
 \end{description}
-コンテナ用に設計されたネットワークプロジェクトです。もとはNeutronのサブプロジェクトでしたが、分離されました。コンテナに関しては長らくすったもんだを繰り返していましたが、ネットワークはKuryrになんとか落ち着いていきそうです。コンテナ自体はMagnumで落ち着きそうですし、OpenStackとコンテナはなんとか落としどころを見つけたのでしょうか。そもそも、仮想マシン(インスタンス)とコンテナではライフサイクルが違う、ということに無理があったそうで。
 
-ところで、どう発音すればよいのかは謎である。
+\begin{wrapfigure}[13]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/kuryr_logo.png}
+	\end{center}
+\end{wrapfigure}
+
+コンテナ用に設計されたNeurtonプラグインを作るプロジェクトです。Dockerのlibnetworkドライバ実装の1つという位置付けです。MagnumとNeutronの間の仲をとりもつ、という趣旨もあるようです。OpenStackを使ってコンテナのマネジメントをするために、必要ならNeutronあるいはDockerコミュニティーに対して働きかけたりするようです。Kuryr自体がコンテナネットワーク実装の唯一解になるつもりはないそうです。
+
+コンテナに関しては長らくすったもんだを繰り返していましたが、ネットワークはKuryrになんとか落ち着いていきそうです。コンテナ自体はMagnumで落ち着きそうですし、OpenStackとコンテナはなんとか落としどころを見つけたのでしょうか。そもそも、仮想マシン(インスタンス)とコンテナではライフサイクルが違う、ということに無理があったりはします。
+
+ところで、どう発音すればよいのかは謎である。くりあー?くりゅあー?
+
+\section{Monasca}
+
+\begin{description}
+	\item[wiki:] \url{https://wiki.openstack.org/wiki/Monasca}
+	\item[IRC:] \verb|#openstack-monasca|
+\end{description}
+
+インスタンスのモニタリングし、アラートを出してくれるようなサービスを作るプロジェクトです。
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/Monasca-arch-component-diagram.png}
+\end{figure}
 
 \section{Searchlight}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Searchlight}
+	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/searchlight/}
+	\item[IRC:] \verb|#openstack-searchlight|
 \end{description}
+
 確か最初はGlanceのイメージを検索できるように、というような趣旨のプロジェクトだった気がするのですが、LibertyでのデザインサミットでGlanceに限らずOpenStackのリソースすべてを検索対象とする方針の転換がありました。今はサーチサービスという大義のようです。ミッションは「マルチテナンシーのある、スケーラブルなインデクサーとサーチエンジンの提供」です。
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/Searchlight-Concept-1.png}
+\end{figure}
 
 OpenStackにかかわるあらゆるもの、例えばインスタンスなどの情報を集めて、Elasticsearchにインデックスし、それを検索可能にするAPIを提供します。Horizonのインスタンス検索機能は貧弱ですし、APIも文字列部分一致程度のリスティング機能しかありませんので、Searchlightは便利だと言えるでしょう。
 
 \section{Senlin}
 \begin{description}
-	\item[インストールガイド:] \url{http://docs.openstack.org/developer/senlin/install.html}
-	\item[開発者ガイド:] \url{http://docs.openstack.org/developer/senlin/developer/index.html}
+	\item[インストールガイド:] {\small\url{http://docs.openstack.org/developer/senlin/install.html}}
+	\item[開発者ガイド:] {\small\url{http://docs.openstack.org/developer/senlin/developer/index.html}}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Senlin}
 \end{description}
-インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。クラスタ化するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
+インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。
+
+\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+	\begin{center}
+		\includegraphics[width=0.3\textwidth]{img/Senlin-policies.png}
+	\end{center}
+\end{wrapfigure}
+
+クラスタ化するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
 
 \begin{itemize}
 	\item 配置 (Placement)
@@ -258,9 +303,12 @@ OpenStackにかかわるあらゆるもの、例えばインスタンスなど�
 \end{itemize}
 
 \section{Solum}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Solum}
+	\item[IRC:] \verb|#solum|
 \end{description}
+
 Software Development Lifecycle Automation service: 直訳するとソフトウエア開発サイクルの自動化サービス、です。ソースコードのOSイメージへの配置やデプロイ作業を自動化し、OpenStackをアプリケーション開発フローと統合させることがミッションです。
 
 プロジェクトのゴールは開発者目線からとアプリケーションの可搬性、アプリケーションを作成するプログラミング言語に依存しない設計の3つから定められています。
@@ -290,11 +338,12 @@ Software Development Lifecycle Automation service: 直訳するとソフトウ�
 NovaのDokcerを使う、という辺りに少し不安はあるものの、ニーズは大きそうなプロジェクトです。
 
 \section{Vitrage}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
 \end{description}
 
-\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[7]{r}[0mm]{0.3\textwidth}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
 	\end{center}
@@ -320,6 +369,7 @@ OpenStackのアラートやイベントを可視化したり分析すること�
 \section{Watcher}
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Watcher}
+	\item[IRC:] \verb|#openstack-watcher|
 \end{description}
 OpenStackベースのクラウド環境でのリソース制御機構を提供しようというプロジェクトです。システムメトリクスの収集や最適化、アクションプランのプロセスが動作します。データセンターの運用コストやマイグレーションによるシステムパフォーマンスの改善、電源効率の改善なども視野に入っているようです。制御アルゴリズムはデフォルトで入っているもの以外にもプラグイン形式で追加することもできます。OpenStack運用者のためのプロジェクトを言えます。なんともピンと来ませんが、いくつがユースケースが紹介されています。
 
@@ -330,10 +380,15 @@ OpenStackベースのクラウド環境でのリソース制御機構を提供�
 	\item リソースの使用状況を詳細に監視することができる。
 \end{itemize}
 
-以下のアーキテクチャで動作しています
+以下のアーキテクチャで動作しています。データベースが2つあるようです。
+
+\begin{figure}
+	\includegraphics[width=\textwidth]{img/watcher-architecture.pdf}
+\end{figure}
 
 \begin{itemize}
 	\item 基本的にはメッセージキューからのイベント駆動
 	\item イベントにはOpenStackのあらゆるコンポーネントに対応可能。 (Novaのマイグレーション、Keystoneの認証など)
 	\item 逆にWatcherからイベントを発行させることも可能
+	\item Cluster History DBにはクラスタのメトリクスが保管されます。Ceilometerと似ています。Cluster Model DBにクラスタの情報は保管されるようです。
 \end{itemize}
