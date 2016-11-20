@@ -9,28 +9,44 @@
 \usepackage{setspace}
 \usepackage{wrapfig}
 
-\lstset{basicstyle={\footnotesize\ttfamily}}
-\lstset{frame=single}
+\lstset{basicstyle={\scriptsize\ttfamily}}
 \lstset{breaklines=true}
-\lstset{lineskip=-1.8pt}
-\lstset{framesep=6pt}
+\lstset{lineskip=-3pt}
+\lstset{aboveskip=16pt}
+\lstset{belowskip=10pt}
 
 \renewcommand{\kanjifamilydefault}{\gtdefault}
 \renewcommand{\familydefault}{\sfdefault}
 \renewcommand{\contentsname}{}
-%\renewcommand{\baselinestretch}{1.2}
 
 \definecolor{gray75}{gray}{0.75}
 \titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\textcolor{gray75}{｜}}{0pt}{\Huge\bfseries}
 
 \begin{document}
 
-\chapter{はじめに}
+{\Huge OpenStackの本 --- 実践編}
+
+\begin{minipage}{\textwidth}
+	\tableofcontents
+\end{minipage}
+
+\thispagestyle{empty}
 
 \include{log-system}
 
 \include{big-tent}
 
 \chapter{あとがき}
+
+\vspace*{\stretch{1}}
+\setstretch{1.0}
+\begin{minipage}{0.5\paperwidth}
+	\begin{description}
+		\item[著者:]こじろー・まっきー
+		\item[挿絵:]かとう
+		\item[発行:]2016年12月31日
+		\item[印刷:]POPLS (\url{http://www.inv.co.jp/~popls/})
+	\end{description}
+\end{minipage}
 
 \end{document}
