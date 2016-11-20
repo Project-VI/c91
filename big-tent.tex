@@ -119,10 +119,11 @@ $ designate record-create ae59d62b-d655-49a0-ab4b-ea536d845a32 --name www.design
 プライベートDNSはなかなか自動化が進まなかったりする分野ではあるのですが、ニーズもまた大きいと思います。クラウドネイティブ、という考えからするとDNSに依存するのはあまり得策ではないのですが……。とはいえやはりDNSは必要な環境も多いだろうと思うので、注目されているコンポーネントでしょう。
 
 \section{Dragonflow}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Dragonflow}
-	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/dragonflow/distributed_dragonflow.html}
-	\item[IRC:] \verb|#openstack-dragonflow| on freenode
+	\item[wiki:] \url{http://docs.openstack.org/developer/dragonflow/}
+	\item[IRC:] \verb|#openstack-dragonflow|
 \end{description}
 
 \begin{wrapfigure}[4]{r}[0mm]{0.3\textwidth}
@@ -150,6 +151,7 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 コンテナ、NAT、障害検知などもロードマップに入っています。RJ45がドラゴンの口に見える、というのはまぁ、気持ちは分かりますが。
 
 \section{Freezer}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Freezer}
 	\item[IRC:] \verb|#openstack-freezer|
@@ -189,9 +191,11 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 ノードで稼働するプロセスの存在が気にはなりますが、それもSSH経由などでリモートから可能であれば、十分実用可能性があると思います。オンプレ製品などにインストールするのは気が引けますね。
 
 \section{Karbor}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Karbor}
 \end{description}
+
 旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。
 
 例えば以下のようなアプリケーションがあったとします。
@@ -218,7 +222,7 @@ Wikiを見ると分かりますが、割と複雑なシステム構成になっ�
 
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kolla}
-	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/kolla/}
+	\item[wiki:] \url{http://docs.openstack.org/developer/kolla/}
 	\item[IRC:] \verb|#openstack-kolla|
 \end{description}
 
@@ -232,7 +236,7 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Kuryr}
-	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/kuryr/}
+	\item[wiki:] \url{http://docs.openstack.org/developer/kuryr/}
 	\item[IRC:] \verb|#openstack-kuryr|
 \end{description}
 
@@ -255,17 +259,38 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 	\item[IRC:] \verb|#openstack-monasca|
 \end{description}
 
-インスタンスのモニタリングし、アラートを出してくれるようなサービスを作るプロジェクトです。
+インスタンスのモニタリングし、アラートを出してくれるようなサービスを作るプロジェクトです。高可用性とスケーラビリティーの良さをうたっており、OPNFVからの注目が熱いプロジェクトです。以下のような特徴を持っています。
+
+\begin{itemize}
+	\item ハイパフォーマンス・スケーラブル・高可用
+	\item REST API実装によるシンプルな動作
+	\item マルチテナント対応
+	\item リアルタイム性
+	\item 複数のアラームの合成
+	\item Nagiosや\verb|statsd|との連携
+	\item オープンコミュニティーでの開発
+\end{itemize}
+
+構成は意外と複雑です。
 
 \begin{figure}
 	\includegraphics[width=\textwidth]{img/Monasca-arch-component-diagram.png}
 \end{figure}
 
+\begin{description}
+	\item[Agent:] メトリクス監視エージェントです。MySQLなど有名所に対してはデフォルトである程度のアラートセットを定義済みです。Nagiosや\verb|statsd|との連携もできます。
+	\item[Persister:] メッセージキューからのデータをデータベースに保管することに特化したプロセスです。大量のデータを高速に処理する必要があるので分離されているのでしょう。
+	\item[UI:] Horizonに統合されています。モニタリングにはやはりGUIがあるべきでしょう。
+	\item[Ceilometer Publisher:] Ceilometerとの連携機能もあります。
+\end{description}
+
+可用性とパフォーマンスにはかなり気を遣っているようです。既存のモニタリングシステムとの連携も考えられているようなので、段階的な導入はできそうな気がします。
+
 \section{Searchlight}
 
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Searchlight}
-	\item[開発者ドキュメント:] \url{http://docs.openstack.org/developer/searchlight/}
+	\item[wiki:] \url{http://docs.openstack.org/developer/searchlight/}
 	\item[IRC:] \verb|#openstack-searchlight|
 \end{description}
 
@@ -278,18 +303,22 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 OpenStackにかかわるあらゆるもの、例えばインスタンスなどの情報を集めて、Elasticsearchにインデックスし、それを検索可能にするAPIを提供します。Horizonのインスタンス検索機能は貧弱ですし、APIも文字列部分一致程度のリスティング機能しかありませんので、Searchlightは便利だと言えるでしょう。
 
 \section{Senlin}
+
 \begin{description}
-	\item[インストールガイド:] {\small\url{http://docs.openstack.org/developer/senlin/install.html}}
-	\item[開発者ガイド:] {\small\url{http://docs.openstack.org/developer/senlin/developer/index.html}}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Senlin}
+	\item[wiki:] \url{http://docs.openstack.org/developer/senlin/developer/index.html}
+	\item[IRC:] \verb|#senlin|
 \end{description}
-インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。
+
+インスタンスをクラスタ化することができるAPIを提供します。Novaが作成したインスタンスだけが対象ではなく、Heatのスタックなどもクラスタ化することができます。Heatで頑張ればなんとかできる、をSenlinでちゃんとやる、という感じです。
+
+以下のような構成で動作します。
 
 \begin{figure}
 	\includegraphics[width=\textwidth]{img/Senlin-policies.png}
 \end{figure}
 
-クラスタ化するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
+クラスタを管理するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
 
 \begin{itemize}
 	\item 配置 (Placement)
@@ -300,10 +329,13 @@ OpenStackにかかわるあらゆるもの、例えばインスタンスなど�
 	\item その他
 \end{itemize}
 
+これらのポリシーに紐付けられたノードをまとめて管理することでクラスタを生成します。
+
 \section{Solum}
 
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Solum}
+	\item[wiki:] \url{http://docs.openstack.org/developer/solum/index.html}
 	\item[IRC:] \verb|#solum|
 \end{description}
 
@@ -339,6 +371,8 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Vitrage}
+	\item[wiki:] \url{https://github.com/openstack/vitrage/tree/master/doc/source}
+	\item[IRC:] \verb|#openstack-vitrage|
 \end{description}
 
 \begin{wrapfigure}[7]{r}[0mm]{0.3\textwidth}
@@ -347,13 +381,13 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\end{center}
 \end{wrapfigure}
 
-OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立て得ようとするプロジェクトです。アーキテクチャは以下のようになっています。
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立てようとするプロジェクトです。アーキテクチャは以下のようになっています。
 
 \begin{figure}
 	\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
 \end{figure}
 
-機能としては
+以下のような機能を持っています。
 
 \begin{itemize}
 	\item コンピュートホストやネットワーク機器などの物理機器の状態と、その物理機に依存している仮想マシンとの紐付け
@@ -365,28 +399,33 @@ OpenStackのアラートやイベントを可視化したり分析すること�
 とあるネットワークスイッチで障害が発生した場合、どの仮想マシンが影響を受けるか、といった分析が可能になります。これらの情報を持っていることで、物理機器のメンテナンス時の影響を把握することも簡単になりそうです。
 
 \section{Watcher}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Watcher}
+	\item[wiki:] \url{http://docs.openstack.org/developer/watcher/index.html}
 	\item[IRC:] \verb|#openstack-watcher|
 \end{description}
-OpenStackベースのクラウド環境でのリソース制御機構を提供しようというプロジェクトです。システムメトリクスの収集や最適化、アクションプランのプロセスが動作します。データセンターの運用コストやマイグレーションによるシステムパフォーマンスの改善、電源効率の改善なども視野に入っているようです。制御アルゴリズムはデフォルトで入っているもの以外にもプラグイン形式で追加することもできます。OpenStack運用者のためのプロジェクトを言えます。なんともピンと来ませんが、いくつがユースケースが紹介されています。
+
+OpenStackベースのクラウド環境でのリソース制御機構を提供しようというプロジェクトです。システムメトリクスの収集や最適化、アクションプランのプロセスが動作します。データセンターの運用コストやマイグレーションによるシステムパフォーマンスの改善、電源効率の改善なども視野に入っているようです。制御アルゴリズムはデフォルトで入っているもの以外にもプラグイン形式で追加することもできます。OpenStack運用者のためのプロジェクトと言えます。なんともピンと来ませんが、いくつがユースケースが紹介されています。
 
 \begin{itemize}
-	\item サーバー筐体の温度や空調、電源管理などの物理的なリソースの運用時に、仮想マシンのホスト間移動や適切なスケジューリングの機構を提供することができるようになる。
-	\item 最適化が必要になるしきい値の指定や変更が容易。
-	\item テストや開発環境ではリソースを詰めて、本番環境では少し余裕を持たせたスケジューリングをしたいなど、リソースセットの定義をすることができる。
-	\item リソースの使用状況を詳細に監視することができる。
+	\item サーバー筐体の温度や空調、電源管理などの物理的なリソースの運用時に、仮想マシンのホスト間移動や適切なスケジューリングの機構を提供する
+	\item 最適化が必要になるしきい値の指定や変更が容易になる
+	\item テストや開発環境ではリソースを詰めて、本番環境では少し余裕を持たせたスケジューリングをしたいなど、リソースセットを定義する
+	\item リソースの使用状況を詳細に監視する
+	\item イベントにはOpenStackのあらゆるコンポーネントに対応可能。 (Novaのマイグレーション、Keystoneの認証など)
+	\item 逆にWatcherからイベントを発行させることも可能
 \end{itemize}
 
-以下のアーキテクチャで動作しています。データベースが2つあるようです。
+以下のアーキテクチャで動作しています。例によって、メッセージキューによるイベント駆動になっています。また、データベースが2つあるようです。
 
 \begin{figure}
 	\includegraphics[width=\textwidth]{img/watcher-architecture.pdf}
 \end{figure}
 
-\begin{itemize}
-	\item 基本的にはメッセージキューからのイベント駆動
-	\item イベントにはOpenStackのあらゆるコンポーネントに対応可能。 (Novaのマイグレーション、Keystoneの認証など)
-	\item 逆にWatcherからイベントを発行させることも可能
-	\item Cluster History DBにはクラスタのメトリクスが保管されます。Ceilometerと似ています。Cluster Model DBにクラスタの情報は保管されるようです。
-\end{itemize}
+\begin{description}
+	\item[API:] REST API実装です。実際のタスクは行いません。
+	\item[Decision Engine:] Applierに渡すActionを作成します。「あるべき姿」にシステムを収束させるためのタスクを決定するプロセスになります。
+	\item[Applier:] メッセージバスに接続され、Decision Engineが作成したプランを実際にプランを実行するプロセスです。タスクの失敗・成功を通知する機能があります。
+	\item[Database:] Cluster History DBにはクラスタのメトリクスが保管されます。Ceilometerと似ています。Cluster Model DBにクラスタの情報は保管されるようです。
+\end{description}
