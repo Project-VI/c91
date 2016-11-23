@@ -1,21 +1,21 @@
-\chapter{BigTent解説}
-OpenStackはそれぞれのコンポーネントが疎結合であるため、連携が容易であることが利点の１つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論された上で定義されます。それぞれのコンポーネントでバージョンを一致させ、結合テストを行います。が、つまりは増えすぎました。さまざまな派生プロジェクト間での調整を行うことが難しくなり、足並みをそろえるだけで数ヶ月かかるようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈では「BigTent構想」と言っています。
+\chapter{Big Tent解説}
+OpenStackはそれぞれのコンポーネントが疎結合であるため、さまざまなシステムとの連携が容易であることが利点の1つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論し、それぞれのコンポーネントでリリース時期やバージョンを一致させ、相互検証を行ってきました。
 
-とはいえ、プロジェクトを減らそうという話ではないわけなので、相変わらずたくさんのプロジェクトが乱立しています。そんなわけで、サブプロジェクトの一部を紹介してみることにしました。プロジェクトのリストはOpenStackのWikiでまとめられているのですが、すべて英語なので調べる気が起きていないひともいるかと思います。
+が、つまりは増えすぎました。さまざまな派生プロジェクト間でのリリース調整を行うことが難しくなり、足並みをそろえるだけで大変で、開発に影響が出るようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈では「Big Tent構想」と呼んでいます。大きなテントにみんな一緒に、的なイメージです。
 
-中には単一ベンダーが１人で頑張っているだけのプロジェクトもあります。また、機能が重複しているんじゃないかというプロジェクトもあります。ちゃんとWikiが整備されていなかったり説明が無かったりと、BigTentは玉石混交です。
+とはいえ、プロジェクトを減らそうという話ではないわけなので、相変わらずたくさんのプロジェクトが乱立しています。そんなわけで、サブプロジェクトの一部を紹介してみることにしました。プロジェクトのリストはOpenStackのWikiでまとめられているのですが、すべて英語なので調べる気が起きていない人もいるかと思います。中には単一ベンダーが１人で頑張っているだけのプロジェクトもあります。また、機能が重複しているんじゃないかというプロジェクトもあります。ちゃんとWikiが整備されていなかったり説明が無かったりと、Big Tentは玉石混交です。
 
 \section{CloudKitty}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/CloudKitty}
-	\item[開発者向けドキュメント:] \url{http://docs.openstack.org/developer/cloudkitty/}
-	\item[IRC:] \verb|#cloudkitty| on freenode
+	\item[wiki:] \url{http://docs.openstack.org/developer/cloudkitty/}
+	\item[IRC:] \verb|#cloudkitty|
 \end{description}
-Rating-as-a-serviceと説明されていますが、課金管理をしてくれます。さまざまなメトリクスを収集し、課金ルールを定義することができます。とあるITコンサルで開発されていたものをアトランタサミットでプロトタイプを紹介してみたところ、思ったより反応が良かったのでOpenStackのプロジェクトとしてオープンに開発していくことにしたようです。
 
-一般的に課金ルールや配賦方法は、技術的というよりはビジネス的な要件から発生し、その手法もさまざまです。そのため、一般的な課金・配賦ルールはビルトインで定義されているものの、プラグイン型式で独自のルールを組み込むこともできるようになっています。Horizonとの統合も当初から設計されています。
+Rating-as-a-serviceと説明されていますが、課金管理をしてくれます。さまざまなメトリクスを収集し、課金ルールを定義し、ユーザーに可視化することができます。とあるITコンサルで開発されていたものをアトランタサミットでプロトタイプを紹介してみたところ、思ったより反応が良かったのでOpenStackのプロジェクトとしてオープンに開発していくことにしたようです。
 
-Ceilometerは確かにメトリクスを計測してくれるのですが、課金に関してはそのスコープ外でした。CloudKittyは以下のプロセスから構成されています。
+一般的に課金ルールや配賦方法は、技術的というよりはビジネス的な要件から発生し、その手法もさまざまです。そのため、一般的な課金・配賦ルールはビルトインで定義されているものの、プラグイン型式で独自のルールを組み込むこともできるようになっています。Horizonとの統合も当初から設計されています。Ceilometerは確かにメトリクスを計測してくれるのですが、課金に関してはそのスコープ外でした。CloudKittyは以下のプロセスから構成されています。
 
 \begin{itemize}
 	\item 課金のもととなるデータ (collector)
@@ -27,13 +27,15 @@ Ceilometerは確かにメトリクスを計測してくれるのですが、課�
 複数のコレクターや書き出しフォーマットを選ぶことができます。
 
 \section{Congress}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Congress}
 	\item[IRC:] \verb|#congress| on freenode
 \end{description}
-OpenStackで構成されたインフラにガバナンスを効かせるためのコンポーネントです。と、wikiには書いてありますが、イメージが掴みにくいですね。文章量もかなりあるのですが。
 
-物理プロビジョンニングが主流だった時代と異なり、仮想的なリソースを管理するためには運用ルールを徹底させるには、その自動化が必要になります。仮想マシンを１つ作るだけで毎回コアファイヤーウォール設定変更の許可を書類でもらうようなことは考えたくありません。Congressはネットワークやコンピュートリソース、ネットワークリソースに対してのガバナンスフレームワークをオープンソースコミュニティで開発していこうとするプロジェクトです。例えば
+OpenStackで構成されたインフラにガバナンスを効かせるためのコンポーネントです。と、wikiには書いてありますが、イメージが掴みにくいですね。wikiの文章量はかなりあるのですが。
+
+物理プロビジョンニングが主流だった時代と異なり、仮想的なコンピュートリソースを管理し、運用ルールを徹底させるには、その適用の自動化が必要になります。仮想マシンを1つ作るだけで毎回ファイヤーウォール設定変更の許可を書類でもらうようなことは考えたくありません。Congressはネットワークやコンピュートリソース、ネットワークリソースに対してのガバナンスフレームワークをオープンソースコミュニティで開発していこうとするプロジェクトです。例えば、
 
 \begin{itemize}
 	\item アプリケーションAはアプリケーションBとの通信のみ許可される
@@ -44,9 +46,10 @@ OpenStackで構成されたインフラにガバナンスを効かせるため�
 などのルールを設定することができます。これらのルールをDatalog型式で記述します。
 
 \section{Designate}
+
 \begin{description}
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Designate}
-	\item[IRC:] \verb|#openstack-dns| on freenode
+	\item[IRC:] \verb|#openstack-dns|
 \end{description}
 
 \begin{wrapfigure}[3]{r}[0mm]{0.3\textwidth}
@@ -64,17 +67,17 @@ OpenStackで構成されたインフラにガバナンスを効かせるため�
 	\item NovaやNeutronと連携してレコードの自動追加
 \end{itemize}
 
-いまのところPowerDNSとBIND9をインストール時点でサポート。プラグイン型式で追加も可能のようです。アーキテクチャはwikiで説明されています。
+いまのところPowerDNSとBIND9をインストール時点でサポートしています。プラグイン型式で追加も可能のようです。アーキテクチャはwikiで説明されています。
 
-\begin{figure}
+\begin{figure}[htb]
 	\begin{center}
 		\includegraphics[width=\textwidth]{img/Designate-Arch.png}
 	\end{center}
 \end{figure}
 
 \begin{description}
-	\item[API:] APIリクエストを受け付けるプロセスです。認証はKeystoneへ、実際の操作はMQへ転送します。
-	\item[Central:] MQからイベントを受け取ります。DNS操作を行うというよりは、Designateデータベースへの書き込みを担当します。レコード操作は別のプロセスが行います。
+	\item[API:] APIリクエストを受け付けるプロセスです。認証はKeystoneへ、実際の操作はメッセージキューへ転送します。
+	\item[Central:] メッセージキューからイベントを受け取ります。DNS操作を行うというよりは、Designateデータベースへの書き込みを担当します。レコード操作は別のプロセスが行います。
 	\item[MiniDNS:] \verb|DNS NOTIFY|の送信や\verb|AXFR|に答えたりします。
 	\item[Pool Manager:] Designate管理下にあるDNSを記憶し、同期することが責務です。
 	\item[Zone Manager:] DNSの状態やゾーンの状態を定期的に監視し、Ceilometerなどに保存します。
@@ -116,7 +119,7 @@ $ designate record-create ae59d62b-d655-49a0-ab4b-ea536d845a32 --name www.design
 +-------------+--------------------------------------+
 \end{lstlisting}
 
-プライベートDNSはなかなか自動化が進まなかったりする分野ではあるのですが、ニーズもまた大きいと思います。クラウドネイティブ、という考えからするとDNSに依存するのはあまり得策ではないのですが……。とはいえやはりDNSは必要な環境も多いだろうと思うので、注目されているコンポーネントでしょう。
+プライベートDNSはなかなか自動化が進まなかったりする分野ではあるのですが、すなわちニーズもまた大きいと思います。クラウドネイティブ、という考えからするとDNSに依存するのはあまり得策ではないのですが……。とはいえやはりDNSは必要な環境も多いだろうと思うので、注目されているコンポーネントでしょう。
 
 \section{Dragonflow}
 
@@ -144,8 +147,10 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 
 アーキテクチャを見ると、Open vSwitchのベースになっているようです。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/dragonflow_distributed_architecture.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/dragonflow_distributed_architecture.png}
+	\end{center}
 \end{figure}
 
 コンテナ、NAT、障害検知などもロードマップに入っています。RJ45がドラゴンの口に見える、というのはまぁ、気持ちは分かりますが。
@@ -163,7 +168,7 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 	\end{center}
 \end{wrapfigure}
 
-バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間での6ックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
+バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
 
 \begin{itemize}
 	\item セグメントサイズ(バックアップに使用するメモリ容量)
@@ -200,7 +205,11 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 
 例えば以下のようなアプリケーションがあったとします。
 
-\includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
+	\end{center}
+\end{figure}
 
 このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
 
@@ -214,7 +223,11 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 
 などなど、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します
 
-\includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+	\end{center}
+\end{figure}
 
 Wikiを見ると分かりますが、割と複雑なシステム構成になっており、デプロイするだけでも大変そうです。コンポーネントが疎結合で、組み合わせることでシステムを作っていく指向とは逆行しそうですが、まぁクラウドエンタープライズ色がかなり強いプロジェクトですね。
 
@@ -273,8 +286,10 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 
 構成は意外と複雑です。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/Monasca-arch-component-diagram.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Monasca-arch-component-diagram.png}
+	\end{center}
 \end{figure}
 
 \begin{description}
@@ -296,8 +311,10 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 
 確か最初はGlanceのイメージを検索できるように、というような趣旨のプロジェクトだった気がするのですが、LibertyでのデザインサミットでGlanceに限らずOpenStackのリソースすべてを検索対象とする方針の転換がありました。今はサーチサービスという大義のようです。ミッションは「マルチテナンシーのある、スケーラブルなインデクサーとサーチエンジンの提供」です。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/Searchlight-Concept-1.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Searchlight-Concept-1.png}
+	\end{center}
 \end{figure}
 
 OpenStackにかかわるあらゆるもの、例えばインスタンスなどの情報を集めて、Elasticsearchにインデックスし、それを検索可能にするAPIを提供します。Horizonのインスタンス検索機能は貧弱ですし、APIも文字列部分一致程度のリスティング機能しかありませんので、Searchlightは便利だと言えるでしょう。
@@ -314,8 +331,10 @@ OpenStackにかかわるあらゆるもの、例えばインスタンスなど�
 
 以下のような構成で動作します。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/Senlin-policies.png}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Senlin-policies.png}
+	\end{center}
 \end{figure}
 
 クラスタを管理するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
@@ -375,7 +394,7 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\item[IRC:] \verb|#openstack-vitrage|
 \end{description}
 
-\begin{wrapfigure}[7]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[9]{r}[20mm]{0.3\textwidth}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
 	\end{center}
@@ -383,8 +402,10 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 
 OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立てようとするプロジェクトです。アーキテクチャは以下のようになっています。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+\begin{figure}[b]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+	\end{center}
 \end{figure}
 
 以下のような機能を持っています。
@@ -419,8 +440,10 @@ OpenStackベースのクラウド環境でのリソース制御機構を提供�
 
 以下のアーキテクチャで動作しています。例によって、メッセージキューによるイベント駆動になっています。また、データベースが2つあるようです。
 
-\begin{figure}
-	\includegraphics[width=\textwidth]{img/watcher-architecture.pdf}
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/watcher-architecture.pdf}
+	\end{center}
 \end{figure}
 
 \begin{description}
