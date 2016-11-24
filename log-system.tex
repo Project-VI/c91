@@ -472,7 +472,7 @@ nova-computeが稼働するKVMホストのサーバから、その上で動く�
 メトリクス取得用のPythonスクリプトのリポジトリはこちらである。ちなみに、これを利用するには、Python 2.7とlibvirt Python bindingsが必要であるので、事前にインストールされたし。
 
 \begin{description}
-  \item[openstack-vm-stats-collector:] \url{https://github.com/Project-VI/openstack-vm-stats-collector}
+	\item[GitHub:] \url{https://github.com/Project-VI/openstack-vm-stats-collector}
 \end{description}
 
 ディレクトリ構造をツリーにするとこうなる。osvmstatというディレクトリ配下に各メトリクスごとのスクリプトを配置しており、かつ、その下のcommon配下に共通で使用する関数と例外処理を配置している。
@@ -506,9 +506,9 @@ openstack-vm-stats-collector/
 
 \end{lstlisting}
 
-exceptions.pyは、特に珍しいことはしていないので解説しない。utils.pyから見ていこう。このライブラリでは、domain_xmlとnova_metadataという2つの関数を実装している。加えて、xml.etree.ElementTreeをimportしている。
+exceptions.pyは、特に珍しいことはしていないので解説しない。utils.pyから見ていこう。このライブラリでは、\verb|domain_xml|と\verb|nova_metadata|という2つの関数を実装している。加えて、xml.etree.ElementTreeをimportしている。
 
-domain_xmlは、xml.etree.ElementTreeを使いインスタンスIDの要素に紐づく情報を取得している。xml.etree.ElementTree自体は、任意のxml要素を渡すことでその要素の値を抽出することが出来るライブラリである。
+\verb|domain_xml|は、xml.etree.ElementTreeを使いインスタンスIDの要素に紐づく情報を取得している。xml.etree.ElementTree自体は、任意のxml要素を渡すことでその要素の値を抽出することが出来るライブラリである。
 
 \begin{lstlisting}
 def domain_xml(domain):
@@ -543,6 +543,3 @@ def nova_metadata(domain):
 \subsection{KVMホストで稼働するデータ転送用のFluentdについて}
 
 \subsection{Kafka Consumerで稼働するConsume用のFluentdについて}
-
-
-
