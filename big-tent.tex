@@ -5,6 +5,8 @@ OpenStackはそれぞれのコンポーネントが疎結合であるため、�
 
 とはいえ、プロジェクトを減らそうという話ではないわけなので、相変わらずたくさんのプロジェクトが乱立しています。そんなわけで、サブプロジェクトの一部を紹介してみることにしました。プロジェクトのリストはOpenStackのWikiでまとめられているのですが、すべて英語なので調べる気が起きていない人もいるかと思います。中には単一ベンダーが１人で頑張っているだけのプロジェクトもあります。また、機能が重複しているんじゃないかというプロジェクトもあります。ちゃんとWikiが整備されていなかったり説明が無かったりと、Big Tentは玉石混交です。
 
+図はすべてOpenStack WiKiから拝借しました。図を多く使ってドキュメントを整備してくれているプロジェクトも多く、オープンソースコミュニティの力を感じます。
+
 \section{CloudKitty}
 
 \begin{description}
@@ -164,22 +166,22 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 
 \begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
 	\begin{center}
-		\includegraphics[width=0.3\textwidth]{img/freezer_logo.png}
+		\includegraphics[width=0.25\textwidth]{img/freezer_logo.png}
 	\end{center}
 \end{wrapfigure}
 
-バックアップサービスです。複数のOSをサポートし(Linux・Windows・OSX・*BSD)、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングもスコープに含みます。暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
+バックアップサービスです。複数のOS(Linux・Windows・OSX・*BSD)をサポートし、ブロックストレージのバックアップやファイルシステムの差分バックアップを可能にすることが目標です。また、指定時間でのバックアップやジョブの同期など、バックアップスケジューリングも可能で、さらに暗号化もできるので安心です。さまざまなバックアップ技術が使用可能です。
 
 \begin{itemize}
 	\item セグメントサイズ(バックアップに使用するメモリ容量)
-	\item キューサイズ(IOや帯域、メモリ・CPUの制限に応じて可変)
-	\item バックアッププロセスの優先度
+	\item キューサイズ(IOや帯域、メモリ・CPUの制限)
+	\item バックアッププロセスのCPU優先度
 	\item 帯域制限
 	\item 暗号化(AES-256-CFB)
 	\item 圧縮(zlib・bzip2・xz/lzmaなど)
 	\item 並列アップロードやさまざまなストレージメディアに対応(SwiftやSSHでリモートホストへの転送など)
 	\item ファイルベースの差分バックアップ(\verb|tar|など)、ブロックベースの差分バックアップ(\verb|rsync|など)
-	\item マルチプラットフォーム対応(LinuxではLVMなど、WindowsではVSSを用いる)
+	\item マルチプラットフォーム対応(LinuxではLVMなど、WindowsではVSSに対応)
 	\item 自動バックアップファイルローテーション
 	\item バックアップ前後でのタスク実行
 	\item 複数ノードでの同期バックアップ・リストア
@@ -201,13 +203,11 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Karbor}
 \end{description}
 
-旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。
-
-例えば以下のようなアプリケーションがあったとします。
+旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。例えば以下のようなアプリケーションがあったとします。
 
 \begin{figure}[htb]
 	\begin{center}
-		\includegraphics[width=\textwidth]{img/Smaug-sample-application.png}
+		\includegraphics[width=0.7\textwidth]{img/Smaug-sample-application.png}
 	\end{center}
 \end{figure}
 
@@ -221,11 +221,11 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 	\item Webインスタンスは2つあり
 \end{itemize}
 
-などなど、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します
+ということになりますが、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します。
 
 \begin{figure}[htb]
 	\begin{center}
-		\includegraphics[width=\textwidth]{img/Smaug-dependency-graph.png}
+		\includegraphics[width=0.7\textwidth]{img/Smaug-dependency-graph.png}
 	\end{center}
 \end{figure}
 
@@ -241,9 +241,7 @@ Wikiを見ると分かりますが、割と複雑なシステム構成になっ�
 
 OpenStackのコンポーネントをDocker化しようというプロジェクトです。OpenStackのAPIサーバーはImmutableなものとして扱うことが容易なので、すでにコンテナを使っている人も多いのではないかと思います。MissionにはOpenStackデプロイの簡素化や素早い増強ができるようにするとあります。
 
-特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。
-
-コアコンポーネントだけでなく、CephやManila、Kuryrなどもデプロイできるようです。Kibanaもデプロイできるようで、これはOpenStackの監視に使う目的でしょう。
+特にカスタマイズしなくても動くようなイメージを目指しているようですが、DockerfileをJinja2のテンプレートになっているのでカスタマイズが可能です。ソースコードからのインストール、RDOやUbuntuのリポジトリを使ったインストールの両方をサポートしています。コアコンポーネントだけでなく、CephやManila、Kuryrなどもデプロイできるようです。Kibanaもデプロイできるようで、これはOpenStackの監視に使う目的でしょう。
 
 \section{Kuryr}
 
@@ -253,13 +251,13 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 	\item[IRC:] \verb|#openstack-kuryr|
 \end{description}
 
-\begin{wrapfigure}[13]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[10]{r}[0mm]{0.2\textwidth}
 	\begin{center}
-		\includegraphics[width=0.3\textwidth]{img/kuryr_logo.png}
+		\includegraphics[width=0.2\textwidth]{img/kuryr_logo.png}
 	\end{center}
 \end{wrapfigure}
 
-コンテナ用に設計されたNeurtonプラグインを作るプロジェクトです。Dockerのlibnetworkドライバ実装の1つという位置付けです。MagnumとNeutronの間の仲をとりもつ、という趣旨もあるようです。OpenStackを使ってコンテナのマネジメントをするために、必要ならNeutronあるいはDockerコミュニティーに対して働きかけたりするようです。Kuryr自体がコンテナネットワーク実装の唯一解になるつもりはないそうです。
+コンテナ用に設計されたNeurtonプラグインを作るプロジェクトです。Dockerのlibnetworkドライバ実装の1つという位置付けです。MagnumとNeutronの間の仲をとりもつ、という趣旨もあるようです。OpenStackを使ってコンテナのマネジメントをするために、NeutronあるいはDockerコミュニティーに対して必要な働きかけ行ったりもするようです。Kuryr自体がコンテナネットワーク実装の唯一解になるつもりはないそうです。
 
 コンテナに関しては長らくすったもんだを繰り返していましたが、ネットワークはKuryrになんとか落ち着いていきそうです。コンテナ自体はMagnumで落ち着きそうですし、OpenStackとコンテナはなんとか落としどころを見つけたのでしょうか。そもそも、仮想マシン(インスタンス)とコンテナではライフサイクルが違う、ということに無理があったりはします。
 
@@ -394,21 +392,13 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\item[IRC:] \verb|#openstack-vitrage|
 \end{description}
 
-\begin{wrapfigure}[9]{r}[20mm]{0.3\textwidth}
+\begin{wrapfigure}[9]{r}[0mm]{0.3\textwidth}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
 	\end{center}
 \end{wrapfigure}
 
-OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立てようとするプロジェクトです。アーキテクチャは以下のようになっています。
-
-\begin{figure}[b]
-	\begin{center}
-		\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
-	\end{center}
-\end{figure}
-
-以下のような機能を持っています。
+OpenStackのアラートやイベントを可視化したり分析することで、トラブルを未然に防いだり、トラブルシューティングに役立てようとするプロジェクトです。以下のような機能を持っています。
 
 \begin{itemize}
 	\item コンピュートホストやネットワーク機器などの物理機器の状態と、その物理機に依存している仮想マシンとの紐付け
@@ -416,6 +406,14 @@ OpenStackのアラートやイベントを可視化したり分析すること�
 	\item アラートやイベントによる問題解決
 	\item ダッシュボード (Horizon)
 \end{itemize}
+
+アーキテクチャは以下のようになっています。
+
+\begin{figure}[htb]
+	\begin{center}
+		\includegraphics[width=\textwidth]{img/Vitrage-high_level_architecture2.png}
+	\end{center}
+\end{figure}
 
 とあるネットワークスイッチで障害が発生した場合、どの仮想マシンが影響を受けるか、といった分析が可能になります。これらの情報を持っていることで、物理機器のメンテナンス時の影響を把握することも簡単になりそうです。
 
@@ -452,3 +450,5 @@ OpenStackベースのクラウド環境でのリソース制御機構を提供�
 	\item[Applier:] メッセージバスに接続され、Decision Engineが作成したプランを実際にプランを実行するプロセスです。タスクの失敗・成功を通知する機能があります。
 	\item[Database:] Cluster History DBにはクラスタのメトリクスが保管されます。Ceilometerと似ています。Cluster Model DBにクラスタの情報は保管されるようです。
 \end{description}
+
+いかがだったでしょうか。OpenStackの懐の広さを感じてもらえたかと思います。実は他にもマイナーなプロジェクトがあったり、OpenStackの開発インフラを使用しないプロジェクトなんかもあったりしますので、いろいろ見てみると楽しいと思います。
