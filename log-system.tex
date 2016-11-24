@@ -436,7 +436,7 @@ $ influx -username admin -password xxxxxxxx
 > GRANT ALL ON metrics_db TO openstackadmin
 \end{lstlisting}
 
-InfluxDBに関しては、これくらいである。特に運用も難しくなく、よしなに動いてくれる。負荷も低く、ディスク容量も食わない、現状最高のTime-series DBである。
+InfluxDBに関しては、これくらいである。特に運用も難しくなく、よしなに動いてくれる。負荷も低く、ディスク容量も食わない、唯一無二のTime-series DBである。
 
 \section{OpenStack運用のためにチェックしたほうが良いイベントログについて}
 イベントログについて言及すると、当たり前だがチェックしたほうがいいログはたくさんある。とりあえず、出力されてるログは全部集めよう。それは何かというと、/var/log/配下のすべてのコンポーネントに紐づくログのことである。
@@ -466,4 +466,80 @@ InfluxDBに関しては、これくらいである。特に運用も難しくな
 あくまで、一例である。ぶっちゃけると、こういったアラートやダッシュボードは、自分がOpenStackの運用を開始した時点では１つもなかった。ありとあらゆるトラブルに遭遇する中でちょっとづつ増えていったものである。
 
 \section{KVMからVMのメトリクスを取得する方法}
-nova-computeが稼働するKVMホストのサーバから、その上で動くインスタンスのメトリクスを取得する方法について記す。
+nova-computeが稼働するKVMホストのサーバから、その上で動くインスタンスのメトリクスを取得する方法について記す。他の人がどうやってるのか、そもそもそんなことやっていないのか分からない。本サークスでは、各メトリクスの項目の情報をjsonで出力するPythonスクリプトをcronで実行してファイルにログを出力して、それをFluentdで読み込んで転送する、という流れで行っている。
+
+\subsection{Pythonスクリプトの実装について}
+メトリクス取得用のPythonスクリプトのリポジトリはこちらである。ちなみに、これを利用するには、Python 2.7とlibvirt Python bindingsが必要であるので、事前にインストールされたし。
+
+\begin{description}
+	\item[GitHub:] \url{https://github.com/Project-VI/openstack-vm-stats-collector}
+\end{description}
+
+ディレクトリ構造をツリーにするとこうなる。osvmstatというディレクトリ配下に各メトリクスごとのスクリプトを配置しており、かつ、その下のcommon配下に共通で使用する関数と例外処理を配置している。
+
+\begin{lstlisting}
+openstack-vm-stats-collector/
+  |
+  +-LICENSE
+  |
+  +-osvmstat/
+  | |
+  | +-block_info.py
+  | |
+  | +-block_stats.py
+  | |
+  | +-common/
+  | | |
+  | | +-__init__.py
+  | | |
+  | | +-exceptions.py
+  | | |
+  | | +-utils.py
+  | |
+  | +-interface_stats.py
+  | |
+  | +-memory_stats.py
+  | |
+  | +-vcpus.py
+  |
+  +-README.md
+
+\end{lstlisting}
+
+exceptions.pyは、特に珍しいことはしていないので解説しない。utils.pyから見ていこう。このライブラリでは、\verb|domain_xml|と\verb|nova_metadata|という2つの関数を実装している。加えて、xml.etree.ElementTreeをimportしている。
+
+\verb|domain_xml|は、xml.etree.ElementTreeを使いインスタンスIDの要素に紐づく情報を取得している。xml.etree.ElementTree自体は、任意のxml要素を渡すことでその要素の値を抽出することが出来るライブラリである。
+
+\begin{lstlisting}
+def domain_xml(domain):
+    return xml.etree.ElementTree.fromstring(domain.XMLDesc())
+\end{lstlisting}
+
+\begin{lstlisting}
+def nova_metadata(domain):
+    metadata = xml.etree.ElementTree.fromstring(
+        domain.metadata(libvirt.VIR_DOMAIN_METADATA_ELEMENT,
+                        "http://openstack.org/xmlns/libvirt/nova/1.0"))
+    return {
+        "name": metadata.find("name").text,
+        "project": {
+            "uuid": metadata.find("owner/project").get("uuid"),
+            "name": metadata.find("owner/project").text
+            }}
+\end{lstlisting}
+
+\begin{lstlisting}
+\end{lstlisting}
+
+\begin{lstlisting}
+\end{lstlisting}
+
+\begin{lstlisting}
+\end{lstlisting}
+
+\begin{lstlisting}
+\end{lstlisting}
+
+\subsection{KVMホストで稼働するデータ転送用のFluentdについて}
+
+\subsection{Kafka Consumerで稼働するConsume用のFluentdについて}
