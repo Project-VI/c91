@@ -560,4 +560,45 @@ def main():
 
 \subsection{VMメトリクス監視のためにKVMホストで稼働するデータ転送用のFluentdについて}
 
+\begin{lstlisting}
+<source>
+  type tail
+  format json
+  time_key timestamp
+  time_format %Y-%m-%dT%H:%M:%S
+  path /var/log/virtstat/memory_stats.log
+  pos_file /var/log/td-agent/virtstat/virtstat.pos
+  tag virtstat.memory_stats
+</source>
+\end{lstlisting}
+
 \subsection{VMメトリクス監視のためにKafka Consumerで稼働するConsume用のFluentdについて}
+
+\begin{lstlisting}
+<match raw_memory_stats>
+  @type record_reformer
+  tag memory_stats
+  enable_ruby true
+  auto_typecast true
+  renew_record true
+  <record>
+    host              ${record['host']}
+    id                ${record['id']}
+    name              ${record['name']}
+    nova_name         ${record['nova_name']}
+    nova_project_name ${record['nova_project_name']}
+    nova_project_uuid ${record['nova_project_uuid']}
+    region            ${record['region']}
+    uuid              ${record['uuid']}
+    actual            ${record['actual'].to_f}
+    available         ${record['available'].to_f}
+    major_fault       ${record['major_fault'].to_f}
+    minor_fault       ${record['minor_fault'].to_f}
+    rss               ${record['rss'].to_f}
+    swap_in           ${record['swap_in'].to_f}
+    swap_out          ${record['swap_out'].to_f}
+    unused            ${record['unused'].to_f}
+    time              ${record['time']}
+  </record>
+</match>
+\end{lstlisting}
