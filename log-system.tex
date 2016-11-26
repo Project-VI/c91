@@ -1,7 +1,7 @@
 \chapter{OpenStackのログに関する個人的な見解}
 \setcounter{page}{1}
 
-兎にも角にもログである。これは運用するにあたって一番(ではないかもしれんが)考慮する必要がある。これをまぁいいかって感じで運用をスタートさせてしまうと、あとで地獄を見るであろう(そのほうが後学のためでもあるという意見もある)。今回は、ボク個人が至極個人的な趣味趣向とミーハー精神に基づき構築し運用もしているログのシステムについて記す。たぶん、これからOpenStackを導入する人にとっては、参考になる部分は、はっきり言って無い。街談巷説、道聴塗説、話半分、そんな本章である。
+兎にも角にもログである。これは運用するにあたって一番(ではないかもしれんが)考慮する必要がある。これをまぁいいかって感じで運用をスタートさせてしまうと、あとで地獄を見るであろう(そのほうが後学のためでもあるという意見もある)。今回は、ボク個人が至極個人的な趣味趣向とミーハー精神に基づき構築し運用もしているログのシステムのごく一部について記す。たぶん、これからOpenStackを導入する人にとっては、参考になる部分は、はっきり言って無い。街談巷説、道聴塗説、話半分、そんな本章である。
 
 \section{ログについて考えてみる}
 前回出版した本 OpenStackの本 上級編ではこのように言及していた。
@@ -167,7 +167,7 @@ dstatが入っていない場合は、事前にdstatをインストールして�
 	\item fluent-plugin-dstat
 \end{itemize}
 
-Fluentdのconfは以下のような設定にする。
+メトリクス監視用の監視対象上で動くKafka ProducerとしてのFluentdのconfは以下のような設定にする。
 
 \begin{lstlisting}
 <source>
@@ -210,7 +210,7 @@ Fluentdのconfは以下のような設定にする。
 
 Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、\verb|reord_reformer|で書き換えている。
 
-\subsection{Kafka ProducerとしてのFluentdの設定}
+\subsection{Kafka ConsumerとしてのFluentdの設定}
 今回、FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
 
 \begin{itemize}
@@ -218,7 +218,7 @@ Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-t
 	\item fluent-plugin-influxdb
 \end{itemize}
 
-Fluentdのconfは以下のような設定にする。
+Kafka Consumerサーバ上で動くFluentdのconfは以下のような設定にする。
 
 \begin{lstlisting}
 <source>
@@ -413,10 +413,9 @@ OSS版InfluxDBについては元々クラスタリング機能が存在したが
 
 構築できたら、その後、最低限のDBの作成まではやっておく必要がある。Measurementsはデータ投入時に勝手に作成されるため何もしなくて問題ない。
 
-
 \begin{lstlisting}
 # Inlfuxdbのコンソールに入る
-$$$ influx
+$ influx
 
 # adminユーザを作成する
 > CREATE USER admin WITH PASSWORD 'xxxxxxxx' WITH ALL PRIVILEGES
@@ -515,6 +514,8 @@ def domain_xml(domain):
     return xml.etree.ElementTree.fromstring(domain.XMLDesc())
 \end{lstlisting}
 
+\verb|nova_metadata|は、まず、xml.etree.ElementTreeを使い、メタデータを取得する。そのメタデータの中から、VMの名前と紐づくProjectのUUIDと名前を抽出して、辞書の形式で値をreturnしている。
+
 \begin{lstlisting}
 def nova_metadata(domain):
     metadata = xml.etree.ElementTree.fromstring(
@@ -528,18 +529,35 @@ def nova_metadata(domain):
             }}
 \end{lstlisting}
 
-\begin{lstlisting}
-\end{lstlisting}
+utils.pyで行っている処理はこれだけである。次に各メトリクス項目を取得するためのスクリプトを見ていきたいと思う。が、どれもやってることは同じようなロジックなので、例として、一番簡単な\verb|memory_stats.py|を見ていこう。見ていこうと言っても、main関数しかないのですぐ終わる。
 
 \begin{lstlisting}
+def main():
+    conn = libvirt.openReadOnly()
+    if conn is None:
+        raise exceptions.HypervisorConnectionFailError()
+
+    for id in conn.listDomainsID():
+        dom = conn.lookupByID(id)
+        print(json.dumps({
+            "nova": utils.nova_metadata(dom),
+            "uuid": dom.UUIDString(),
+            "name": dom.name(),
+            "id": dom.ID(),
+            "memory_stats": dom.memoryStats(),
+            }))
 \end{lstlisting}
 
-\begin{lstlisting}
-\end{lstlisting}
+流れとしてはこの通りとなる。
 
-\begin{lstlisting}
-\end{lstlisting}
+\begin{enumerate}
+  \item libvirt.openReadOnly()を使い、ReadOnlyでlibvirtdに接続する
+  \item listDomainsID()を使って、アクティブなドメインのリスト一覧を取得する
+  \item 取得したIDでループを回して、次にlookupByID()で各ドメインの接続情報を取得する
+  \item memoryStats()というメモリー関連の情報を含めてjson.dumpsを使い辞書形式で出力する
+\end{enumerate}
 
-\subsection{KVMホストで稼働するデータ転送用のFluentdについて}
 
-\subsection{Kafka Consumerで稼働するConsume用のFluentdについて}
+\subsection{VMメトリクス監視のためにKVMホストで稼働するデータ転送用のFluentdについて}
+
+\subsection{VMメトリクス監視のためにKafka Consumerで稼働するConsume用のFluentdについて}
