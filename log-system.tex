@@ -152,7 +152,7 @@ OpenStackで稼働中のVMのメトリクススを取得する方法は、公式
 
 前の章で、メトリクス監視にはMetricbeatがよいと言ったが、一応dstat + df Pluginを使った例を記す。まぁこれでも監視できるよって感じの例である。一旦Kafkaにデータを送って、それをまたFluentdでConsumeするという方法である。
 
-\subsection{Kafka ProducerとしてのFluentdの設定}
+\subsection{Fluentdを使ったメトリクス監視をする時、Kafka Producerとして動かすFluentdの設定}
 dstatが入っていない場合は、事前にdstatをインストールしておく必要がある。またFluentdはv0.12以降をインストールする必要がある。インストールが必要なアプリとFluentdのPluginは以下の通りである。
 
 \begin{itemize}
@@ -210,8 +210,8 @@ dstatが入っていない場合は、事前にdstatをインストールして�
 
 Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、\verb|reord_reformer|で書き換えている。
 
-\subsection{Kafka ConsumerとしてのFluentdの設定}
-今回、FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
+\subsection{Fluentdを使ったメトリクス監視をする時、Kafka Consumerとして動かすFluentdの設定}
+FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
 
 \begin{itemize}
 	\item fluent-plugin-record-reformer
@@ -559,6 +559,7 @@ def main():
 
 
 \subsection{VMメトリクス監視のためにKVMホストで稼働するデータ転送用のFluentdについて}
+メモリ監視の項目を例に、データ転送用のFluentdの設定すると、以下の通りにとなる。基本的に前章で解説したスクリプトを各KVMホストでcronで稼働させておき、そのログを適当なディレクトリに吐き出すようにする。そして、Fluentd側ではtailプラグインを使って、ログをtailしてKafkaに転送する、という流れである。
 
 \begin{lstlisting}
 <source>
@@ -573,6 +574,7 @@ def main():
 \end{lstlisting}
 
 \subsection{VMメトリクス監視のためにKafka Consumerで稼働するConsume用のFluentdについて}
+こちらは、Kafkaにまで転送されてきたデータを取得して、整形した後にInfluxDBに送るという部分になる。Kafkaプラグインで送られてきた場合、TagはKafkaのTopic名になってしまう。しかし、データ内にtagというKeyが入っており、KVMホスト内で設定したTagがValueに記載されているので、それに差し替える。その後、以下の例(これもメモリ監視)の通り、\verb|record_reformer|プラグインを使い、各項目をネスト無しのjson形式に整形してInfluxDBに送る。
 
 \begin{lstlisting}
 <match raw_memory_stats>
@@ -602,3 +604,7 @@ def main():
   </record>
 </match>
 \end{lstlisting}
+
+\section{ログについて考えてみた}
+ここまで、思いつくままにログについていくつか記載してみた。本誌では、全体像、Fluentdの設定、そしてVM監視用Pythonの解説を行ったことで、Kafkaについてはほとんど詳細を書けなかったが、実はいちばん重要なコンポーネントである。監視対象のスケールアウトも、InfluxDBへのダブルポストも、SPOFをなくすという点も、Kafkaがなければ実現しない。今回は紙面を割けなかったが、Kafkaについては、また別の機会に記すことになるかもしれない。以上である。
+
