@@ -1,5 +1,12 @@
-\chapter{OpenStackのログに関する個人的な見解}
+\chapter{OpenStackのログに\\関する個人的な見解}
 \setcounter{page}{1}
+
+\begin{wrapfigure}[0]{r}{0.25\textwidth}
+	\vspace*{-13\intextsep}
+	\begin{center}
+		\includegraphics[width=0.25\textwidth]{img/yukidaruma.png}
+	\end{center}
+\end{wrapfigure}
 
 兎にも角にもログである。これは運用するにあたって一番(ではないかもしれんが)考慮する必要がある。これをまぁいいかって感じで運用をスタートさせてしまうと、あとで地獄を見るであろう(そのほうが後学のためでもあるという意見もある)。今回は、ボク個人が至極個人的な趣味趣向とミーハー精神に基づき構築し運用もしているログのシステムのごく一部について記す。たぶん、これからOpenStackを導入する人にとっては、参考になる部分は、はっきり言って無い。街談巷説、道聴塗説、話半分、そんな本章である。
 
@@ -8,13 +15,15 @@
 
 \begin{quotation}
 	Q. 入れたはいいけど監視したいです
+
 	A. 何を監視するか決めましょう
+
 	まずは仮想マシンの監視ですが、これは普通のOS監視と同じ考え方で大丈夫です。ZabbixでもInfluxDBでも好きな物を使えますので、運用スタイルにあったものを選択しましょう。仮想環境ではマシンが頻繁に作成されては消えていく性質があるため、それに対応できるような監視ソリューションがいいと思います。
 
 	コンピュートホストやネットワークノードなど、OpenStackで使われる物理サーバーの監視は普通のログやシステムメトリクスの監視に加えて、OpenStack専用の監視項目を追加する必要があるかもしれません。メモリは実使用メモリと仮想マシン割り当て量が大きく違ってきますので注意が必要です。また、ディスクもThinプロビジョニングですと、あるとき急にディスクがあふれる、なんていうこともあり得ます。libvirtのAPIなどを使用して（\verb|virsh|コマンドなど）仮想マシンホスト専用のメトリクスを取得することを考えるとよいと思います。
 \end{quotation}
 
-そう、何を監視するか、というのはとても重要である。死活監視は今回置いておくとして、監視対象のログは大きく2つに分けられる。1つ目は、イベントログ、2つ目は、パフォーマンスログである。イベントログというと、OpenStackの各コンポーネントから出力されたログである。主に、/var/log/XXX/配下にあるものを指す。パフォーマンスログとは、OpenStackの各コンポーネントを稼働させている各サーバ、及びKVMホストの性能データを指す。
+そう、何を監視するか、というのはとても重要である。死活監視は今回置いておくとして、監視対象のログは大きく2つに分けられる。1つ目は、イベントログ、2つ目は、パフォーマンスログである。イベントログというと、OpenStackの各コンポーネントから出力されたログである。主に、\verb|/var/log/XXX/|配下にあるものを指す。パフォーマンスログとは、OpenStackの各コンポーネントを稼働させている各サーバ、及びKVMホストの性能データを指す。
 
 これらを取得し、ストアし、分析し、障害対応のために役に立てるための定番の構成というものがある。
 
@@ -44,7 +53,7 @@
              +------------------+
 \end{lstlisting}
 
-なぜ、Splunk導入を強くすすめるかというと、それは、OpenStackのエラーログ(及びTRACEログ)の出力にある。OpenStackは、知っての通りPythonで記述されている。つまりどういうことかというと、OpenStackのコンポーネントが何かエラーを発生させてPythonの例外処理に入った際、ログはトレース(Pythonのコールスタック)付きのCRITICALなログメッセージの形式で出力される、ということである。
+なぜ、Splunk導入を強くすすめるかというと、それは、OpenStackのエラーログ(及び\verb|TRACE|ログ)の出力にある。OpenStackは、知っての通りPythonで記述されている。つまりどういうことかというと、OpenStackのコンポーネントが何かエラーを発生させてPythonの例外処理に入った際、ログはトレース(Pythonのコールスタック)付きのCRITICALなログメッセージの形式で出力される、ということである。
 
 この例を見ていただければ、察しがつくと思うが、このようなログをそのままログ分析用のストレージに格納し分析まで可能にするプロダクトはSplunkだけである。
 
@@ -114,7 +123,7 @@ OpenStackで稼働中のVMのメトリクススを取得する方法は、公式
 
 \subsection{ログ転送の全体像}
 大まかな全体像としてはこのような形になる。次の章からは1つずつ細かな説明をする。ここまで言及してなかったが、ログストレージとしては現時点でInfluxDB一択である。Elasticsearchは本来検索のためのものであり、時系列データを取り扱うのに最適とは言い難い。ただ問題は、InfluxDBが単一障害点になるということである(ただし、Enterprise版除く)。これを解決する手段としても、KafkaとConsumerで実現するダブルポスト方法がベターだと考えられる。
-
+\newpage
 \begin{lstlisting}
 +-------------------------------------------+
 |                                           |
@@ -208,7 +217,7 @@ dstatが入っていない場合は、事前にdstatをインストールして�
 </match>
 \end{lstlisting}
 
-Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名がmetrics-topicという名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名がdf.<デバイス名>になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、\verb|reord_reformer|で書き換えている。
+Brokerがkafkabroker001:9092,kafkabroker002:9092であり、Topic名が\verb|metrics-topic|という名前であるという仮定している。dfに関してはデバイスごとのキャパシティが取得できるのだが、Fluentdのtag名が\verb|df.<デバイス名>|になってしまい、かつ取得できるjsonにデバイス名が含まれていないため、\verb|reord_reformer|で書き換えている。
 
 \subsection{Fluentdを使ったメトリクス監視をする時、Kafka Consumerとして動かすFluentdの設定}
 FluentdをKafka Consuemerとしても使用する。ConsumerとしてKafkaからデータを取得してInfluxDBにダブルポストを行う。こっちにインストールが必要なFluentd Pluginはこちらである。
@@ -395,7 +404,7 @@ OSS版InfluxDBについては元々クラスタリング機能が存在したが
 日本語の詳細記事はこちらを是非参照してみてほしい。
 
 \begin{itemize}
-	\item https://yakst.com/en/posts/3870
+	\item \url{https://yakst.com/en/posts/3870}
 \end{itemize}
 
 今回は、OSS版InfluxDBを使う前提なので、カジュアルにDBへのダブルポストを行い、かつ耐障害性もそこそこある構成にするためにKafkaを使っている。Kafkaを使うことで、メトリクスデータは、InfluxDBに投入される前の段階において、Retention期間中Kafkaクラスター内で冗長化された状態で保持される。また、Kafka Consumerとして使うFluentdもConsumer Groupを用いて複数台にスケールしている。そうすることで、監視対象のクライアントサイドからInfluxDBまでのどこで障害が起こっても、どこかの地点では確実にデータが保持され、SPOFになることはないはずである。
@@ -406,7 +415,7 @@ OSS版InfluxDBについては元々クラスタリング機能が存在したが
 
 
 \begin{itemize}
-	\item https://github.com/bdangit/chef-influxdb
+	\item \url{https://github.com/bdangit/chef-influxdb}
 \end{itemize}
 
 最近これを使ってv1.1.0までアップデートしたが、特に問題ない。最近のバージョンでも安定してデプロイが可能である。ちなみに、僕も少しだけこのレポジトリにコントリビュートしたというのは、ここだけの話である。
@@ -444,7 +453,7 @@ InfluxDBに関しては、これくらいである。特に運用も難しくな
 
 \begin{itemize}
 	\item DHCPエラーチェック
-	\item 全コンポーネントのログレベルERROR以上のログチェック
+	\item 全コンポーネントのログレベル\verb|ERROR|以上のログチェック
 	\item APIのヘルスチェック
 	\item 物理ディスクの障害検知
 	\item 各プロジェクトごとのCinderボリューム使用率閾値チェック
@@ -474,7 +483,7 @@ nova-computeが稼働するKVMホストのサーバから、その上で動く�
 	\item[GitHub:] \url{https://github.com/Project-VI/openstack-vm-stats-collector}
 \end{description}
 
-ディレクトリ構造をツリーにするとこうなる。osvmstatというディレクトリ配下に各メトリクスごとのスクリプトを配置しており、かつ、その下のcommon配下に共通で使用する関数と例外処理を配置している。
+ディレクトリ構造をツリーにするとこうなる。\verb|osvmstat|というディレクトリ配下に各メトリクスごとのスクリプトを配置しており、かつ、その下の\verb|common|配下に共通で使用する関数と例外処理を配置している。
 
 \begin{lstlisting}
 openstack-vm-stats-collector/
@@ -505,16 +514,16 @@ openstack-vm-stats-collector/
 
 \end{lstlisting}
 
-exceptions.pyは、特に珍しいことはしていないので解説しない。utils.pyから見ていこう。このライブラリでは、\verb|domain_xml|と\verb|nova_metadata|という2つの関数を実装している。加えて、xml.etree.ElementTreeをimportしている。
+\verb|exceptions.py|は、特に珍しいことはしていないので解説しない。\verb|utils.py|から見ていこう。このライブラリでは、\verb|domain_xml|と\verb|nova_metadata|という2つの関数を実装している。加えて、\verb|xml.etree.ElementTree|を\verb|import|している。
 
-\verb|domain_xml|は、xml.etree.ElementTreeを使いインスタンスIDの要素に紐づく情報を取得している。xml.etree.ElementTree自体は、任意のxml要素を渡すことでその要素の値を抽出することが出来るライブラリである。
+\verb|domain_xml|は、\verb|xml.etree.ElementTree|を使いインスタンスIDの要素に紐づく情報を取得している。\verb|xml.etree.ElementTree|自体は、任意のxml要素を渡すことでその要素の値を抽出することが出来るライブラリである。
 
 \begin{lstlisting}
 def domain_xml(domain):
     return xml.etree.ElementTree.fromstring(domain.XMLDesc())
 \end{lstlisting}
 
-\verb|nova_metadata|は、まず、xml.etree.ElementTreeを使い、メタデータを取得する。そのメタデータの中から、VMの名前と紐づくProjectのUUIDと名前を抽出して、辞書の形式で値をreturnしている。
+\verb|nova_metadata|は、まず、\verb|xml.etree.ElementTree|を使い、メタデータを取得する。そのメタデータの中から、VMの名前と紐づくProjectのUUIDと名前を抽出して、辞書の形式で値を\verb|return|している。
 
 \begin{lstlisting}
 def nova_metadata(domain):
@@ -529,7 +538,7 @@ def nova_metadata(domain):
             }}
 \end{lstlisting}
 
-utils.pyで行っている処理はこれだけである。次に各メトリクス項目を取得するためのスクリプトを見ていきたいと思う。が、どれもやってることは同じようなロジックなので、例として、一番簡単な\verb|memory_stats.py|を見ていこう。見ていこうと言っても、main関数しかないのですぐ終わる。
+\verb|utils.py|で行っている処理はこれだけである。次に各メトリクス項目を取得するためのスクリプトを見ていきたいと思う。が、どれもやってることは同じようなロジックなので、例として、一番簡単な\verb|memory_stats.py|を見ていこう。見ていこうと言っても、main関数しかないのですぐ終わる。
 
 \begin{lstlisting}
 def main():
@@ -551,10 +560,10 @@ def main():
 流れとしてはこの通りとなる。
 
 \begin{enumerate}
-  \item libvirt.openReadOnly()を使い、ReadOnlyでlibvirtdに接続する
-  \item listDomainsID()を使って、アクティブなドメインのリスト一覧を取得する
-  \item 取得したIDでループを回して、次にlookupByID()で各ドメインの接続情報を取得する
-  \item memoryStats()というメモリー関連の情報を含めてjson.dumpsを使い辞書形式で出力する
+	\item \verb|libvirt.openReadOnly()|を使い、ReadOnlyでlibvirtdに接続する
+	\item \verb|listDomainsID()|を使って、アクティブなドメインのリスト一覧を取得する
+	\item 取得したIDでループを回して、次に\verb|lookupByID()|で各ドメインの接続情報を取得する
+	\item \verb|memoryStats()|というメモリー関連の情報を含めて\verb|json.dumps|を使い辞書形式で出力する
 \end{enumerate}
 
 
@@ -608,3 +617,7 @@ def main():
 \section{ログについて考えてみた}
 ここまで、思いつくままにログについていくつか記載してみた。本誌では、全体像、Fluentdの設定、そしてVM監視用Pythonの解説を行ったことで、Kafkaについてはほとんど詳細を書けなかったが、実はいちばん重要なコンポーネントである。監視対象のスケールアウトも、InfluxDBへのダブルポストも、SPOFをなくすという点も、Kafkaがなければ実現しない。今回は紙面を割けなかったが、Kafkaについては、また別の機会に記すことになるかもしれない。以上である。
 
+\vspace*{\stretch{1}}
+\begin{flushright}
+	\includegraphics[width=0.35\textwidth]{img/kotatsu.png}
+\end{flushright}

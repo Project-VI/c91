@@ -1,4 +1,4 @@
-\documentclass[10pt,b5paper,openany]{jsbook}
+\documentclass[9pt,b5paper,papersize,openany]{jsbook}
 
 \usepackage[dvipdfmx]{graphicx}
 \usepackage[dvipdfmx]{color}
@@ -18,7 +18,6 @@
 \renewcommand{\kanjifamilydefault}{\gtdefault}
 \renewcommand{\familydefault}{\sfdefault}
 \renewcommand{\contentsname}{}
-\renewcommand{\baselinestretch}{0.9}
 
 \definecolor{gray75}{gray}{0.75}
 \titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\textcolor{gray75}{｜}}{0pt}{\Huge\bfseries}
@@ -29,7 +28,7 @@
 
 \vspace*{10mm}
 \begin{minipage}{0.5\textwidth}
-	{\scriptsize 毎度おなじみOpenStackの本ですが、今回でついに4冊目になりました。絞ったぞうきんをさらに絞るような感が出てきましたが、今回は実践編ということにして、ログに関することを書くことにしました。それだけではページが足りないので、ついでにOpenStackのサブプロジェクトまとめのようなものを後半に持ってきました。}
+	\scriptsize 毎度おなじみOpenStackの本ですが、今回でついに5冊目になりました。今回は実践編ということで、ログに関することを書くことにしました。ところがそれだけではページが足りないので、ついでにいろいろあるOpenStackのサブプロジェクトをまとめたような内容を後半に持ってきてみました。ネタがさすがになくなってきて、絞ったぞうきんをさらに絞るような感が出てきましたが、何かの役に立てば幸いです。
 \end{minipage}
 
 \vspace*{-1truein}
@@ -45,7 +44,15 @@
 
 \chapter{あとがき}
 
+\begin{wrapfigure}[0]{r}{0.34\textwidth}
+	\vspace*{-14\intextsep}
+	\begin{center}
+		\includegraphics[width=0.34\textwidth]{img/daruma.png}
+	\end{center}
+\end{wrapfigure}
+
 \section*{こじろー}
+
 このような薄い本を手に取っていただきありがとうございます。こんな本のあとがきなんてもう書くことが何もないので、ついに「同人誌 あとがき」でググってみました。そしたら、最近の傾向としては、そもそもあとがきなんか書かない派のサークルさんが多いらいいです。ふむふむ、と思って自分たちの同人誌の過去のあとがきを読むと、もうヒドすぎて、これはもうあとがきではなく、ただの落書きだなって感じでした。こんな落書きだったら、実は書かないほうが良かったんじゃなかろうかって思ったのですが、そういやページ稼ぎのために無理やり尺を伸ばした文章だったと思い出して、残念な気持ちになりました。
 
 ところで、文章を書くという行為は本当に精神力を使うなってヒシヒシと感じております。この同人誌のための文章を書くにしても、少しずつしか書けなくて、こんなに集中力が続かないものかと、自分でもびっくりしている次第です。これはどうやら歳のせいだと勝手に結論付けて納得しておきます。加えて、OpenStackに対する自分の熱量が低くなったからなんだろうなって感じます。はっきり言ってネタが無くて困っており、次回夏コミ(当確すれば)のネタは全く思いつきません。ですが、実は来年から自分はOpenStackに対する熱量を増やしていかなければいけない仕事をすることになりまして、こんな泣き言みたいなことを言っている場合ではないな、自分を律するようにしている次第でござます。
@@ -53,8 +60,15 @@
 今は一旦、この本が完成することに満足し、一息ついて、また来年は何をしようか、ゆっくり考えてきたいと思う。
 
 \section*{まっきーさん}
-書くことない。
 
+博士後期課程の学生になりました。数年後に博士(情報学)になる予定です。そんなわけで最近はOpenStackに触れていないし、友人のサークルにも寄稿したりとかしているせいで、あとがきに書くことがなくなってしまった。前回はあんなに書いたのに。もう表紙だけの本みたいなもんですよ。表紙の方がクオリティ高くねぇか。まぁいいか。
+
+いやはや、本当に次はコミケに行けるかさえ怪しい。せめてネタが出てくればまだ書けるとは思うのだが。上述のように2人とも大学と関係を持つことになったので、学術的な本とかのほうが書きやすくなる気がする。
+
+で、そういうネタって何かありましたっけ?
+
+\newpage
+\thispagestyle{empty}
 \vspace*{\stretch{1}}
 \setstretch{1.0}
 \begin{minipage}{0.5\paperwidth}
@@ -62,7 +76,7 @@
 		\item[著者:]こじろー・まっきー
 		\item[挿絵:]かとう
 		\item[発行:]2016年12月31日
-		\item[印刷:]POPLS (\url{http://www.inv.co.jp/~popls/})
+		\item[印刷:]グラフィック(\url{http://www.graphic.jp/})
 	\end{description}
 \end{minipage}
 

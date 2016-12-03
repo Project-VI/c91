@@ -1,4 +1,12 @@
 \chapter{Big Tent解説}
+
+\begin{wrapfigure}[0]{r}{0.34\textwidth}
+	\vspace*{-14\intextsep}
+	\begin{center}
+		\includegraphics[width=0.34\textwidth]{img/daruma.png}
+	\end{center}
+\end{wrapfigure}
+
 OpenStackはそれぞれのコンポーネントが疎結合であるため、さまざまなシステムとの連携が容易であることが利点の1つです。その結果、さまざまな連携プロジェクトが生まれ、非常にリッチなクラウド環境の構築ができるようになりました。品質を維持するために、APIの仕様はきちんと議論し、それぞれのコンポーネントでリリース時期やバージョンを一致させ、相互検証を行ってきました。
 
 が、つまりは増えすぎました。さまざまな派生プロジェクト間でのリリース調整を行うことが難しくなり、足並みをそろえるだけで大変で、開発に影響が出るようになっていまいました。そこで、OpenStackのコアとなるコンポーネントを定義し、それらの結合テスト以外はサブプロジェクトとして、リリースを一致させる必要はない、ということにしました。これをOpenStack界隈では「Big Tent構想」と呼んでいます。大きなテントにみんな一緒に、的なイメージです。
@@ -54,7 +62,8 @@ OpenStackで構成されたインフラにガバナンスを効かせるため�
 	\item[IRC:] \verb|#openstack-dns|
 \end{description}
 
-\begin{wrapfigure}[3]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[3]{r}{0.3\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/logo-designate.pdf}
 	\end{center}
@@ -131,7 +140,8 @@ $ designate record-create ae59d62b-d655-49a0-ab4b-ea536d845a32 --name www.design
 	\item[IRC:] \verb|#openstack-dragonflow|
 \end{description}
 
-\begin{wrapfigure}[4]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[4]{r}{0.3\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/Df_logo.png}
 	\end{center}
@@ -164,9 +174,10 @@ Neutron APIを使った分散型SDNコントローラー、らしいのですが
 	\item[IRC:] \verb|#openstack-freezer|
 \end{description}
 
-\begin{wrapfigure}[6]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[6]{r}{0.3\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
-		\includegraphics[width=0.25\textwidth]{img/freezer_logo.png}
+		\includegraphics[width=0.3\textwidth]{img/freezer_logo.png}
 	\end{center}
 \end{wrapfigure}
 
@@ -203,31 +214,33 @@ Horizonとの統合も開発が進んでおり、CLIでできることがHorizon
 	\item[wiki:] \url{https://wiki.openstack.org/wiki/Karbor}
 \end{description}
 
-旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。例えば以下のようなアプリケーションがあったとします。
-
-\begin{figure}[htb]
+\begin{wrapfigure}[9]{r}{0.5\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{img/Smaug-sample-application.png}
+		\includegraphics[width=0.5\textwidth]{img/Smaug-sample-application.png}
 	\end{center}
-\end{figure}
+\end{wrapfigure}
 
-このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
+旧Smaugです。WikiにはOpenStackデプロイのデータとメタデータを保護するもの、あるいはKeystoneのプロジェクト下にあるものの保護、と書いてありますがこれだけではどうにもピンときません。
+
+例えば以下のようなアプリケーションがあったとします。このアプリケーションをシステムまるごと保存し、変更されたことを検知したいとします。このシステムを説明すると
 
 \begin{itemize}
 	\item DBインスタンスは1つで、DBネットワークに接続されている
 	\item DBネットワークはRouter配下にある
 	\item Appインスタンスは1つで、Appネットワークに接続されている
 	\item AppネットワークはRouter配下にある
-	\item Webインスタンスは2つあり
+	\item Webインスタンスは2つある
 \end{itemize}
 
 ということになりますが、これらの情報を保存しておくことになります。Karborではこれを依存グラフとして表現します。
 
-\begin{figure}[htb]
+\begin{wrapfigure}[6]{r}{0.5\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{img/Smaug-dependency-graph.png}
+		\includegraphics[width=0.5\textwidth]{img/Smaug-dependency-graph.png}
 	\end{center}
-\end{figure}
+\end{wrapfigure}
 
 Wikiを見ると分かりますが、割と複雑なシステム構成になっており、デプロイするだけでも大変そうです。コンポーネントが疎結合で、組み合わせることでシステムを作っていく指向とは逆行しそうですが、まぁクラウドエンタープライズ色がかなり強いプロジェクトですね。
 
@@ -251,7 +264,8 @@ OpenStackのコンポーネントをDocker化しようというプロジェク�
 	\item[IRC:] \verb|#openstack-kuryr|
 \end{description}
 
-\begin{wrapfigure}[10]{r}[0mm]{0.2\textwidth}
+\begin{wrapfigure}[7]{r}{0.2\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
 		\includegraphics[width=0.2\textwidth]{img/kuryr_logo.png}
 	\end{center}
@@ -329,11 +343,12 @@ OpenStackにかかわるあらゆるもの、例えばインスタンスなど�
 
 以下のような構成で動作します。
 
-\begin{figure}[htb]
+\begin{wrapfigure}[5]{r}{0.5\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
-		\includegraphics[width=\textwidth]{img/Senlin-policies.png}
+		\includegraphics[width=0.5\textwidth]{img/Senlin-policies.png}
 	\end{center}
-\end{figure}
+\end{wrapfigure}
 
 クラスタを管理するにおいて、ポリシーを設定することができ、以下のプラグインがあるようです
 
@@ -392,7 +407,8 @@ NovaのDokcerを使う、という辺りに少し不安はあるものの、ニ�
 	\item[IRC:] \verb|#openstack-vitrage|
 \end{description}
 
-\begin{wrapfigure}[9]{r}[0mm]{0.3\textwidth}
+\begin{wrapfigure}[6]{r}{0.3\textwidth}
+	\vspace*{-2\intextsep}
 	\begin{center}
 		\includegraphics[width=0.3\textwidth]{img/Vitrage_logo_finaly.png}
 	\end{center}
@@ -452,3 +468,8 @@ OpenStackベースのクラウド環境でのリソース制御機構を提供�
 \end{description}
 
 いかがだったでしょうか。OpenStackの懐の広さを感じてもらえたかと思います。実は他にもマイナーなプロジェクトがあったり、OpenStackの開発インフラを使用しないプロジェクトなんかもあったりしますので、いろいろ見てみると楽しいと思います。
+
+\vspace*{\stretch{1}}
+\begin{flushright}
+	\includegraphics[width=0.35\textwidth]{img/mochi.png}
+\end{flushright}
